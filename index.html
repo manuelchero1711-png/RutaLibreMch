@@ -38,7 +38,6 @@
             filter: brightness(0.65) invert(1) contrast(1.3) hue-rotate(200deg) saturate(0.8);
         }
 
-        /* Forzar pantalla completa nativa sin márgenes en APK / PWA */
         html, body {
             margin: 0;
             padding: 0;
@@ -51,12 +50,11 @@
 </head>
 <body class="bg-slate-950 text-white w-screen h-[100dvh] overflow-hidden flex flex-col select-none">
 
-    <!-- CONTENEDOR PRINCIPAL NATIVO (PANTALLA COMPLETA) -->
+    <!-- CONTENEDOR PRINCIPAL NATIVO -->
     <div id="mobilePhoneShell" class="relative w-full h-full bg-slate-900 overflow-hidden flex flex-col">
 
-        <!-- CABECERA FLOTANTE MINIMALISTA (MÁXIMO MAPA VISIBLE) -->
+        <!-- CABECERA FLOTANTE -->
         <header class="relative z-30 px-3 pt-2 pointer-events-none flex flex-col gap-1 w-full shrink-0">
-            <!-- Barra superior compacta con indicador de ruta y convoy -->
             <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl px-3 py-2 shadow-xl flex items-center justify-between">
                 <div class="flex items-center gap-2 min-w-0">
                     <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
@@ -81,7 +79,7 @@
                 </div>
             </div>
 
-            <!-- BUSCADOR FLOTANTE COMPACTO -->
+            <!-- BUSCADOR FLOTANTE -->
             <div class="pointer-events-auto relative">
                 <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
                     <i class="fa-solid fa-magnifying-glass text-xs"></i>
@@ -92,15 +90,14 @@
                         Destinos
                     </button>
                 </div>
-                <!-- Resultados de Búsqueda -->
                 <div id="mainSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl hidden z-50 max-h-48 overflow-y-auto"></div>
             </div>
         </header>
 
-        <!-- CONTENEDOR PRINCIPAL DEL MAPA -->
+        <!-- MAPA -->
         <div id="map" class="absolute inset-0 z-10 w-full h-full"></div>
 
-        <!-- CONTROLES FLOTANTES IZQUIERDOS -->
+        <!-- CONTROLES IZQUIERDOS -->
         <div class="absolute left-3 bottom-24 z-20 flex flex-col gap-2.5 pointer-events-auto">
             <div class="w-14 h-14 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700 shadow-2xl flex flex-col items-center justify-center p-1 relative">
                 <span id="speedValue" class="text-lg font-black font-mono text-cyan-400 leading-none">0</span>
@@ -112,7 +109,7 @@
             </button>
         </div>
 
-        <!-- BOTONES PRINCIPALES FLOTANTES DERECHOS -->
+        <!-- BOTONES DERECHOS -->
         <div class="absolute right-3 bottom-24 z-20 flex flex-col items-end gap-3 pointer-events-auto">
             <button onclick="openModal('reportModal')" class="w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black flex flex-col items-center justify-center shadow-2xl active:scale-95 border-2 border-amber-300">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
@@ -124,7 +121,7 @@
             </button>
         </div>
 
-        <!-- BARRA INFERIOR NATIVA -->
+        <!-- BARRA INFERIOR -->
         <nav class="relative z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-4 py-2.5 flex items-center justify-around shrink-0 text-slate-400 text-[10px]">
             <button onclick="openModal('routesModal')" class="flex flex-col items-center gap-1 hover:text-cyan-400 active:scale-95">
                 <i class="fa-solid fa-route text-base text-cyan-400"></i>
@@ -134,9 +131,9 @@
                 <i class="fa-solid fa-users-rays text-base text-violet-400"></i>
                 <span class="font-bold">Convoy</span>
             </button>
-            <button onclick="openModal('voiceModal')" class="flex flex-col items-center gap-1 hover:text-emerald-400 active:scale-95">
-                <i class="fa-solid fa-walkie-talkie text-base text-emerald-400"></i>
-                <span class="font-bold">Sala Voz</span>
+            <button onclick="openModal('profileModal')" class="flex flex-col items-center gap-1 hover:text-emerald-400 active:scale-95">
+                <i class="fa-solid fa-user-gear text-base text-emerald-400"></i>
+                <span class="font-bold">Mi Perfil</span>
             </button>
             <button onclick="useRealGPSOnce()" class="flex flex-col items-center gap-1 hover:text-amber-400 active:scale-95">
                 <i class="fa-solid fa-crosshairs text-base text-amber-400"></i>
@@ -184,8 +181,8 @@
                     <div class="flex items-center gap-2">
                         <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center"><i class="fa-solid fa-users-rays"></i></div>
                         <div>
-                            <h2 class="text-sm font-extrabold text-white">Salas de Convoy Independientes</h2>
-                            <p class="text-[11px] text-slate-400">Crea tu propio convoy o únete al de tus amigos</p>
+                            <h2 class="text-sm font-extrabold text-white">Convoy Independiente</h2>
+                            <p class="text-[11px] text-slate-400">Comparte tu código para ir por el mismo lado</p>
                         </div>
                     </div>
                     <button onclick="closeModal('convoyModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
@@ -193,7 +190,7 @@
                 <div class="mt-3 bg-slate-950 border border-violet-500/40 rounded-2xl p-3 space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-violet-400">Tu Código de Convoy Actual</span>
+                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-violet-400">Tu Código de Convoy</span>
                             <div id="modalConvoyCode" class="text-xl font-black font-mono text-white">WZ-849</div>
                         </div>
                         <div class="flex gap-1.5">
@@ -202,23 +199,27 @@
                         </div>
                     </div>
                     <div class="pt-2.5 border-t border-slate-800 flex gap-1.5">
-                        <input id="joinCodeInput" type="text" placeholder="Escribe el código del convoy de tu amigo (Ej. WZ-123)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none uppercase font-mono font-bold">
+                        <input id="joinCodeInput" type="text" placeholder="Escribe el código del amigo (Ej. WZ-123)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white placeholder-slate-500 focus:outline-none uppercase font-mono font-bold">
                         <button onclick="joinFriendConvoy()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-violet-600 to-cyan-500 hover:opacity-90 active:scale-95 text-xs font-black text-white shadow">Unirme</button>
                     </div>
                 </div>
                 <div class="mt-3 space-y-2">
-                    <div class="flex items-center justify-between"><span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Estado del Grupo</span><span class="text-[10px] text-emerald-400 font-bold">● En Línea</span></div>
+                    <div class="flex items-center justify-between"><span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Dispositivos en línea</span><span class="text-[10px] text-emerald-400 font-bold" id="convoyStatusIndicator">● Sincronizado</span></div>
+                    
+                    <!-- Tarjeta Mi Dispositivo -->
                     <div class="p-2.5 rounded-xl bg-slate-800/80 border border-cyan-500/40 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 font-black flex items-center justify-center text-xs">TÚ</div>
-                            <div><h4 id="myConvoyProfileName" class="text-xs font-bold text-white">Este Celular</h4><p class="text-[10px] text-slate-400" id="myDeviceCoordsDisplay">Transmitiendo GPS</p></div>
+                            <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 font-black flex items-center justify-center text-xs"><i id="modalMyAvatarIcon" class="fa-solid fa-car-side"></i></div>
+                            <div><h4 id="myConvoyProfileName" class="text-xs font-bold text-white">Tú</h4><p class="text-[10px] text-slate-400" id="myDeviceCoordsDisplay">Transmitiendo GPS</p></div>
                         </div>
                         <span class="text-[10px] font-bold text-emerald-400">Activo</span>
                     </div>
+
+                    <!-- Tarjeta Dispositivo Amigo -->
                     <div class="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
-                            <div class="w-8 h-8 rounded-full bg-violet-500 text-white font-black flex items-center justify-center text-xs">👥</div>
-                            <div><h4 id="friendConvoyMemberName" class="text-xs font-bold text-white">Esperando amigos en este convoy...</h4><p id="friendDeviceStatus" class="text-[10px] text-slate-400">Comparte tu código</p></div>
+                            <div class="w-8 h-8 rounded-full bg-violet-500 text-white font-black flex items-center justify-center text-xs" id="friendAvatarSymbol">👥</div>
+                            <div><h4 id="friendConvoyMemberName" class="text-xs font-bold text-white">Esperando conexión de amigo...</h4><p id="friendDeviceStatus" class="text-[10px] text-slate-400">Comparte el código para empezar</p></div>
                         </div>
                         <button onclick="focusFriendDevice()" class="px-2.5 py-1 rounded-lg bg-slate-700 text-[11px] font-bold text-violet-300">Localizar</button>
                     </div>
@@ -226,25 +227,30 @@
             </div>
         </div>
 
-        <!-- MODAL 3: SALA DE VOZ -->
-        <div id="voiceModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
+        <!-- MODAL 3: PERFIL Y AJUSTES -->
+        <div id="profileModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
             <div class="bg-slate-900 border-t border-slate-700 w-full rounded-t-3xl p-4 shadow-2xl max-h-[85%] flex flex-col overflow-y-auto no-scrollbar">
                 <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3"></div>
                 <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
                     <div class="flex items-center gap-2">
-                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-walkie-talkie"></i></div>
-                        <div><h2 class="text-sm font-extrabold text-white">Canal de Voz en Línea</h2><p class="text-[11px] text-slate-400">Habla y escucha a tus amigos</p></div>
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center"><i class="fa-solid fa-user-gear"></i></div>
+                        <div><h2 class="text-sm font-extrabold text-white">Configurar Perfil</h2><p class="text-[11px] text-slate-400">Edita tu nombre o borra datos</p></div>
                     </div>
-                    <button onclick="closeModal('voiceModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
+                    <button onclick="closeModal('profileModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
                 </div>
-                <div class="mt-3 space-y-2">
-                    <button onclick="sendQuickVoice('¡Síganme por esta calle, vamos por el mismo lado!')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-left border border-slate-700 flex items-center justify-between"><span class="text-xs font-bold text-white"><i class="fa-solid fa-volume-high text-emerald-400 mr-2"></i> "¡Síganme por aquí!"</span><span class="text-[10px] text-cyan-400">Enviar</span></button>
-                    <button onclick="sendQuickVoice('Precaución, hay tráfico pesado más adelante.')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-left border border-slate-700 flex items-center justify-between"><span class="text-xs font-bold text-white"><i class="fa-solid fa-volume-high text-amber-400 mr-2"></i> "Hay tráfico pesado"</span><span class="text-[10px] text-cyan-400">Enviar</span></button>
-                </div>
-                <div class="mt-4">
-                    <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Historial de Radio</h3>
-                    <div id="voiceLogContainer" class="space-y-1.5 max-h-32 overflow-y-auto">
-                        <div class="p-2.5 rounded-xl bg-slate-800/80 flex items-center justify-between text-xs"><span class="text-violet-300 font-bold"><i class="fa-solid fa-volume-high mr-1"></i> Sistema: Canal abierto</span><span class="text-[10px] text-slate-400">Ahora</span></div>
+                <div class="mt-4 space-y-4">
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Modificar Nickname</label>
+                        <input id="editUserNameInput" type="text" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-bold">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="selectEditAvatar('fa-car-side')" id="edit_avatar_car" class="edit-avatar-option p-3 rounded-2xl bg-slate-800 border-2 border-cyan-400 flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-car-side text-cyan-400 text-base"></i><span class="text-xs font-bold text-white">Auto</span></div>
+                        <div onclick="selectEditAvatar('fa-motorcycle')" id="edit_avatar_moto" class="edit-avatar-option p-3 rounded-2xl bg-slate-950 border border-slate-700 flex items-center gap-2 cursor-pointer"><i class="fa-solid fa-motorcycle text-violet-400 text-base"></i><span class="text-xs font-bold text-white">Moto</span></div>
+                    </div>
+                    <button onclick="saveProfileChanges()" class="w-full py-3 rounded-2xl bg-cyan-500 text-slate-950 font-black text-xs uppercase tracking-wider active:scale-95 shadow">Guardar Cambios</button>
+                    
+                    <div class="pt-3 border-t border-slate-800">
+                        <button onclick="clearAppStorageData()" class="w-full py-3 rounded-2xl bg-rose-500/20 border border-rose-500/40 text-rose-400 font-black text-xs uppercase tracking-wider active:scale-95"><i class="fa-solid fa-trash-can mr-2"></i> Borrar Datos y Reiniciar App</button>
                     </div>
                 </div>
             </div>
@@ -282,11 +288,11 @@
         </div>
 
         <!-- MODAL 5: PERMISOS Y PERFIL INICIAL -->
-        <div id="permissionsModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+        <div id="permissionsModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4 hidden">
             <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-slate-950 text-2xl font-black mb-4 shadow-lg shadow-cyan-500/20"><i class="fa-solid fa-route"></i></div>
                 <h2 class="text-lg font-black text-white">Bienvenido a RutaLibre</h2>
-                <p class="text-xs text-slate-400 mt-1 mb-4">GPS social en vivo, convoy y walkie-talkie 100% gratis. Configuremos tu perfil.</p>
+                <p class="text-xs text-slate-400 mt-1 mb-4">GPS social en vivo, convoy y walkie-talkie 100% gratis.</p>
                 <div class="w-full space-y-4 text-left">
                     <div>
                         <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Tu Nickname / Nombre</label>
@@ -300,10 +306,6 @@
                         <div class="flex items-center justify-between text-xs">
                             <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-location-arrow text-cyan-400"></i><span>Ubicación GPS</span></div>
                             <button onclick="requestGPSExplicit()" id="gpsPermBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-amber-400 hover:bg-slate-700">Permitir</button>
-                        </div>
-                        <div class="flex items-center justify-between text-xs">
-                            <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-microphone text-emerald-400"></i><span>Micrófono (Voz)</span></div>
-                            <button onclick="requestMicExplicit()" id="micPermBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-amber-400 hover:bg-slate-700">Permitir</button>
                         </div>
                     </div>
                 </div>
@@ -321,7 +323,7 @@
 
         let map, tileLayer, userMarker, friendMarker, destMarker, routeLine, routeGlowLine;
         let speakerEnabled = true, isTalking = false, convoyCode = localStorage.getItem('rutalibre_convoy_code') || "WZ-849", isBroadcastingGPS = false, watchPositionId = null;
-        let selectedAvatarIcon = 'fa-car-side', myNickname = 'Conductor', mediaStream = null, gpsGranted = false, micGranted = false;
+        let selectedAvatarIcon = 'fa-car-side', editAvatarIcon = 'fa-car-side', myNickname = 'Conductor';
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'rutalibre-convoy-prod';
         const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
@@ -330,7 +332,7 @@
             projectId: "rutalibre-gps"
         };
 
-        let db, auth, currentUser;
+        let db, auth;
         
         let myDeviceId = localStorage.getItem('rutalibre_device_id');
         if (!myDeviceId) {
@@ -349,15 +351,16 @@
         let activeDestination = { name: "Parque Kennedy, Miraflores", coords: [-12.1219, -77.0297], street: "Av. Arequipa", etaMin: 14, distKm: 4.8 };
 
         window.selectAvatar = selectAvatar;
+        window.selectEditAvatar = selectEditAvatar;
+        window.saveProfileChanges = saveProfileChanges;
+        window.clearAppStorageData = clearAppStorageData;
         window.requestGPSExplicit = requestGPSExplicit;
-        window.requestMicExplicit = requestMicExplicit;
         window.completePermissionsAndStart = completePermissionsAndStart;
         window.toggleRealGPSBroadcast = toggleRealGPSBroadcast;
         window.useRealGPSOnce = useRealGPSOnce;
         window.toggleMapTheme = toggleMapTheme;
         window.startTalking = startTalking;
         window.stopTalking = stopTalking;
-        window.sendQuickVoice = sendQuickVoice;
         window.joinFriendConvoy = joinFriendConvoy;
         window.createNewCustomConvoy = createNewCustomConvoy;
         window.copyConvoyLink = copyConvoyLink;
@@ -377,25 +380,27 @@
             if (savedNickname) {
                 myNickname = savedNickname;
                 document.getElementById('userNameInput').value = myNickname;
+                document.getElementById('editUserNameInput').value = myNickname;
+            } else {
+                myNickname = "Conductor #" + Math.floor(100 + Math.random() * 900);
+                document.getElementById('userNameInput').value = myNickname;
+                document.getElementById('editUserNameInput').value = myNickname;
             }
             if (savedAvatar) {
                 selectedAvatarIcon = savedAvatar;
+                editAvatarIcon = savedAvatar;
                 selectAvatar(selectedAvatarIcon);
+                selectEditAvatar(editAvatarIcon);
             }
 
             document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
             document.getElementById('modalConvoyCode').textContent = convoyCode;
 
-            if (savedNickname && localStorage.getItem('rutalibre_configured') === 'true') {
-                document.getElementById('permissionsModal').classList.add('hidden');
+            if (!localStorage.getItem('rutalibre_configured')) {
+                document.getElementById('permissionsModal').classList.remove('hidden');
+            } else {
                 updateUserMarkerIcon();
                 toggleRealGPSBroadcast();
-            }
-
-            if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
-                try {
-                    navigator.serviceWorker.register('./sw.js').catch(() => {});
-                } catch(e) {}
             }
 
             try {
@@ -407,7 +412,6 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-                currentUser = auth.currentUser;
                 setupCloudSyncListeners();
             } catch (e) {
                 setupCrossTabSync();
@@ -431,6 +435,43 @@
             }
         }
 
+        function selectEditAvatar(icon) {
+            editAvatarIcon = icon;
+            document.querySelectorAll('.edit-avatar-option').forEach(el => {
+                el.classList.remove('border-cyan-400', 'bg-slate-800');
+                el.classList.add('border-slate-700', 'bg-slate-950');
+            });
+            if (icon === 'fa-car-side') {
+                document.getElementById('edit_avatar_car').classList.add('border-cyan-400', 'bg-slate-800');
+                document.getElementById('edit_avatar_car').classList.remove('border-slate-700', 'bg-slate-950');
+            } else {
+                document.getElementById('edit_avatar_moto').classList.add('border-cyan-400', 'bg-slate-800');
+                document.getElementById('edit_avatar_moto').classList.remove('border-slate-700', 'bg-slate-950');
+            }
+        }
+
+        function saveProfileChanges() {
+            const newName = document.getElementById('editUserNameInput').value.trim();
+            if (newName) myNickname = newName;
+            selectedAvatarIcon = editAvatarIcon;
+
+            localStorage.setItem('rutalibre_nickname', myNickname);
+            localStorage.setItem('rutalibre_avatar', selectedAvatarIcon);
+            
+            updateUserMarkerIcon();
+            document.getElementById('myConvoyProfileName').textContent = myNickname;
+            closeModal('profileModal');
+            showToast("Perfil actualizado correctamente", "fa-user-check");
+            publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+        }
+
+        function clearAppStorageData() {
+            if (confirm("¿Estás seguro de borrar los datos y reiniciar la aplicación?")) {
+                localStorage.clear();
+                window.location.reload();
+            }
+        }
+
         function requestGPSExplicit() {
             const btn = document.getElementById('gpsPermBtn');
             btn.textContent = "Solicitando...";
@@ -440,13 +481,11 @@
                         currentCoords = [pos.coords.latitude, pos.coords.longitude];
                         userMarker.setLatLng(currentCoords);
                         map.setView(currentCoords, 16);
-                        gpsGranted = true;
                         btn.textContent = "Concedido";
                         btn.className = "px-2.5 py-1 rounded-lg bg-emerald-500/20 text-[10px] font-bold text-emerald-400";
                         showToast("GPS concedido", "fa-location-arrow");
                     },
                     (err) => {
-                        gpsGranted = true;
                         btn.textContent = "Listo";
                         btn.className = "px-2.5 py-1 rounded-lg bg-cyan-500/20 text-[10px] font-bold text-cyan-400";
                         showToast("GPS activo", "fa-satellite");
@@ -455,23 +494,6 @@
                 );
             } else {
                 btn.textContent = "No disponible";
-            }
-        }
-
-        async function requestMicExplicit() {
-            const btn = document.getElementById('micPermBtn');
-            btn.textContent = "Solicitando...";
-            try {
-                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                micGranted = true;
-                btn.textContent = "Concedido";
-                btn.className = "px-2.5 py-1 rounded-lg bg-emerald-500/20 text-[10px] font-bold text-emerald-400";
-                showToast("Micrófono concedido", "fa-microphone");
-            } catch (err) {
-                micGranted = true;
-                btn.textContent = "Listo";
-                btn.className = "px-2.5 py-1 rounded-lg bg-cyan-500/20 text-[10px] font-bold text-cyan-400";
-                showToast("Audio de convoy activo", "fa-walkie-talkie");
             }
         }
 
@@ -484,6 +506,7 @@
             localStorage.setItem('rutalibre_configured', 'true');
 
             document.getElementById('permissionsModal').classList.add('hidden');
+            document.getElementById('editUserNameInput').value = myNickname;
             updateUserMarkerIcon();
             document.getElementById('myConvoyProfileName').textContent = myNickname;
             showToast(`¡Bienvenido ${myNickname}!`, "fa-user-check");
@@ -499,13 +522,14 @@
                         <div class="w-11 h-11 rounded-2xl bg-cyan-400 border-[3px] border-slate-950 shadow-2xl flex items-center justify-center text-slate-950 font-black text-base">
                             <i class="fa-solid ${selectedAvatarIcon}"></i>
                         </div>
-                        <span class="absolute -bottom-5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-400 border border-cyan-500/40 text-[10px] font-black shadow whitespace-nowrap">${myNickname}</span>
+                        <span class="absolute -bottom-5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-400 border border-cyan-500/40 text-[10px] font-black shadow whitespace-nowrap">${myNickname} (Tú)</span>
                     </div>
                 `,
                 iconSize: [44, 44],
                 iconAnchor: [22, 22]
             });
             userMarker.setIcon(userIcon);
+            document.getElementById('modalMyAvatarIcon').className = `fa-solid ${selectedAvatarIcon}`;
         }
 
         function initMap() {
@@ -520,7 +544,7 @@
 
             const friendIcon = L.divIcon({
                 className: 'custom-marker',
-                html: `<div class="relative flex items-center justify-center"><div class="w-10 h-10 rounded-2xl bg-violet-500 border-2 border-white shadow-2xl flex items-center justify-center text-white text-xs"><i class="fa-solid fa-car"></i></div><span id="friendBadgeName" class="absolute -bottom-5 px-1.5 py-0.5 rounded-full bg-slate-950 text-violet-300 border border-violet-500/40 text-[9px] font-extrabold whitespace-nowrap">Amigo Convoy</span></div>`,
+                html: `<div class="relative flex items-center justify-center"><div class="w-10 h-10 rounded-2xl bg-violet-500 border-2 border-white shadow-2xl flex items-center justify-center text-white text-xs"><i class="fa-solid fa-car"></i></div><span id="friendBadgeName" class="absolute -bottom-5 px-1.5 py-0.5 rounded-full bg-slate-950 text-violet-300 border border-violet-500/40 text-[9px] font-extrabold whitespace-nowrap">Amigo</span></div>`,
                 iconSize: [40, 40], iconAnchor: [20, 20]
             });
 
@@ -588,24 +612,25 @@
                                     foundFriend = true;
                                     friendLastCoords = friendData.coords;
                                     friendMarker.setLatLng(friendLastCoords);
-                                    if (friendData.nickname) {
-                                        const badge = document.getElementById('friendBadgeName');
-                                        if (badge) badge.textContent = friendData.nickname;
-                                        document.getElementById('friendConvoyMemberName').textContent = friendData.nickname;
-                                    }
+                                    const friendName = friendData.nickname || "Amigo";
+                                    const badge = document.getElementById('friendBadgeName');
+                                    if (badge) badge.textContent = friendName;
+                                    document.getElementById('friendConvoyMemberName').textContent = friendName;
                                     const distMeters = Math.round(calculateHaversineDistance(currentCoords, friendLastCoords) * 1000);
                                     document.getElementById('friendDeviceStatus').textContent = `A ${distMeters}m en convoy #${convoyCode}`;
+                                    document.getElementById('friendAvatarSymbol').innerHTML = `<i class="fa-solid ${friendData.avatar || 'fa-car'}"></i>`;
                                 }
                             }
                         });
                         if (!foundFriend) {
-                            document.getElementById('friendConvoyMemberName').textContent = "Esperando amigos en este convoy...";
-                            document.getElementById('friendDeviceStatus').textContent = `Convoy #${convoyCode} listo • Comparte tu código`;
+                            document.getElementById('friendConvoyMemberName').textContent = "Esperando conexión de amigo...";
+                            document.getElementById('friendDeviceStatus').textContent = `Convoy #${convoyCode} activo • Comparte código`;
+                            document.getElementById('friendAvatarSymbol').innerHTML = "👥";
                         }
                     }
                 } else {
-                    document.getElementById('friendConvoyMemberName').textContent = "Esperando amigos...";
-                    document.getElementById('friendDeviceStatus').textContent = `Nuevo convoy #${convoyCode}`;
+                    document.getElementById('friendConvoyMemberName').textContent = "Esperando conexión de amigo...";
+                    document.getElementById('friendDeviceStatus').textContent = `Convoy #${convoyCode} listo`;
                 }
             });
         }
@@ -731,42 +756,44 @@
             clearTimeout(searchDebounceTimer);
             const container = document.getElementById(resultsContainerId);
             if (!query || query.trim().length < 3) { container.classList.add('hidden'); return; }
-            searchDebounceTimer = setTimeout(() => { searchAddress(resultsContainerId, query.trim()); }, 350);
+            searchDebounceTimer = setTimeout(() => { searchNominatim(resultsContainerId, query.trim()); }, 300);
         }
 
-        async function searchAddress(resultsContainerId, directQuery) {
+        async function searchNominatim(resultsContainerId, query) {
             const container = document.getElementById(resultsContainerId);
             container.classList.remove('hidden');
-            container.innerHTML = `<div class="p-3 text-xs text-slate-300"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Buscando...</div>`;
+            container.innerHTML = `<div class="p-3 text-xs text-slate-300"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Buscando direcciones...</div>`;
             try {
-                const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(directQuery)}&location=${currentCoords[1]},${currentCoords[0]}&maxLocations=5&outFields=Match_addr,PlaceName&f=json`;
-                const res = await fetch(url);
+                const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=5`;
+                const res = await fetch(url, { headers: { 'Accept-Language': 'es' } });
                 const data = await res.json();
-                if (!data.candidates || data.candidates.length === 0) {
-                    container.innerHTML = `<div class="p-3 text-xs text-slate-400">Sin resultados.</div>`;
+                if (!data || data.length === 0) {
+                    container.innerHTML = `<div class="p-3 text-xs text-slate-400">Sin resultados encontrados.</div>`;
                     return;
                 }
                 container.innerHTML = '';
-                data.candidates.forEach((item) => {
-                    const lat = item.location.y;
-                    const lng = item.location.x;
-                    const title = item.attributes?.PlaceName || item.address.split(',')[0];
-                    const fullAddress = item.address;
+                data.forEach((item) => {
+                    const lat = parseFloat(item.lat);
+                    const lng = parseFloat(item.lon);
+                    const displayName = item.display_name;
+                    const shortName = displayName.split(',')[0];
                     const btn = document.createElement('button');
-                    btn.className = "w-full p-2.5 hover:bg-slate-800 flex items-center justify-between text-left";
-                    btn.innerHTML = `<div><p class="text-xs font-bold text-white">${title}</p><p class="text-[10px] text-slate-400">${fullAddress}</p></div><span class="text-[10px] font-bold text-cyan-400">Ir →</span>`;
+                    btn.className = "w-full p-2.5 hover:bg-slate-800 flex items-center justify-between text-left border-b border-slate-800/50";
+                    btn.innerHTML = `<div><p class="text-xs font-bold text-white">${shortName}</p><p class="text-[10px] text-slate-400 truncate max-w-[260px]">${displayName}</p></div><span class="text-[10px] font-bold text-cyan-400">Ir →</span>`;
                     btn.onclick = () => {
                         const targetCoords = [lat, lng];
-                        activeDestination = { name: title, coords: targetCoords, street: fullAddress };
-                        calculateRealRoute(currentCoords, targetCoords, title);
-                        publishRouteToCloud(targetCoords, title);
+                        activeDestination = { name: shortName, coords: targetCoords, street: displayName };
+                        calculateRealRoute(currentCoords, targetCoords, shortName);
+                        publishRouteToCloud(targetCoords, shortName);
                         container.classList.add('hidden');
                         closeModal('routesModal');
-                        showToast(`Ruta a ${title} establecida`, "fa-route");
+                        showToast(`Ruta a ${shortName} establecida`, "fa-route");
                     };
                     container.appendChild(btn);
                 });
-            } catch (e) { container.innerHTML = `<div class="p-3 text-xs text-rose-400">Error.</div>`; }
+            } catch (e) {
+                container.innerHTML = `<div class="p-3 text-xs text-rose-400">Error en búsqueda.</div>`;
+            }
         }
 
         function selectPresetRoute(index) {
@@ -806,7 +833,7 @@
             playRadioBeep(920, 0.08);
             document.getElementById('pttButton').classList.add('scale-110', 'ring-4', 'ring-emerald-400');
             document.getElementById('pttLabel').textContent = "Al Aire";
-            showToast("Transmitiendo voz...", "fa-microphone");
+            showToast("Transmitiendo voz al convoy...", "fa-microphone");
         }
 
         function stopTalking(e) {
@@ -816,25 +843,6 @@
             playRadioBeep(620, 0.1);
             document.getElementById('pttButton').classList.remove('scale-110', 'ring-4', 'ring-emerald-400');
             document.getElementById('pttLabel').textContent = "Hablar";
-            addVoiceLog(myNickname, "Voz enviada al convoy", "text-cyan-300");
-        }
-
-        function sendQuickVoice(msg) {
-            playRadioBeep(900, 0.08);
-            speakText(msg);
-            addVoiceLog(myNickname, `"${msg}"`, "text-cyan-300");
-            showToast(`Voz enviada: "${msg}"`, "fa-microphone-lines");
-            closeModal('voiceModal');
-        }
-
-        function speakText(text) {
-            if (!speakerEnabled || !('speechSynthesis' in window)) return;
-            try {
-                window.speechSynthesis.cancel();
-                const utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'es-ES';
-                window.speechSynthesis.speak(utter);
-            } catch (e) {}
         }
 
         function createNewCustomConvoy() {
@@ -874,7 +882,7 @@
         function focusFriendDevice() {
             closeModal('convoyModal');
             if (friendLastCoords) map.setView(friendLastCoords, 17, { animate: true });
-            else showToast("Esperando señal del amigo...", "fa-circle-info");
+            else showToast("Esperando señal del amigo en el mapa...", "fa-circle-info");
         }
 
         function createMapReport(title, iconClass, hexColor) {
@@ -886,7 +894,6 @@
             });
             L.marker(currentCoords, { icon: icon }).addTo(map).bindPopup(`<b>${myNickname}: ${title}</b>`).openPopup();
             showToast(`Reporte enviado: ${title}`, iconClass);
-            speakText(`${myNickname} reportó ${title}`);
         }
 
         function setupCrossTabSync() {
