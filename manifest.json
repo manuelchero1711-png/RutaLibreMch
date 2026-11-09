@@ -1,17 +1,25 @@
 {
-"name": "RutaLibre GPS",
+"name": "RutaLibre GPS Social",
 "short_name": "RutaLibre",
-"start_url": "./index.html",
+"start_url": "index.html",
+"scope": "./",
 "display": "standalone",
+"orientation": "portrait",
 "background_color": "#020617",
 "theme_color": "#22d3ee",
 "description": "GPS social en vivo, convoy y walkie-talkie 100% gratis.",
 "icons": [
 {
+"src": "https://placehold.co/192x192/020617/22d3ee?text=RL",
+"sizes": "192x192",
+"type": "image/png",
+"purpose": "any maskable"
+},
+{
 "src": "https://placehold.co/512x512/020617/22d3ee?text=RL",
 "sizes": "512x512",
-"type": "image/png"
+"type": "image/png",
+"purpose": "any maskable"
 }
 ]
 }
-
