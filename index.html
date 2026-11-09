@@ -328,7 +328,14 @@
         };
 
         let db, auth, currentUser;
-        const myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 9);
+        
+        // ID único persistente para cada dispositivo (evita que se mezclen como el mismo usuario)
+        let myDeviceId = localStorage.getItem('rutalibre_device_id');
+        if (!myDeviceId) {
+            myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 9) + '_' + Date.now().toString(36);
+            localStorage.setItem('rutalibre_device_id', myDeviceId);
+        }
+
         let friendLastCoords = null;
 
         const MAP_TILES = {
@@ -550,17 +557,17 @@
             onSnapshot(convoyDocRef, (docSnap) => {
                 if (docSnap.exists()) {
                     const data = docSnap.data();
-                    if (data.lastUpdatedBy !== myDeviceId) {
+                    if (data.lastUpdatedBy && data.lastUpdatedBy !== myDeviceId) {
                         if (data.destination && data.destination.coords) {
                             const dest = data.destination;
                             if (activeDestination.name !== dest.name) {
                                 activeDestination = dest;
                                 calculateRealRoute(currentCoords, dest.coords, dest.name);
-                                showToast(`Ruta actualizada a: ${dest.name}`, "fa-route");
+                                showToast(`Ruta sincronizada: ${dest.name}`, "fa-route");
                             }
                         }
                     }
-                    if (data.devices && data.devices[myDeviceId]) {
+                    if (data.devices) {
                         const devices = data.devices;
                         Object.keys(devices).forEach(devId => {
                             if (devId !== myDeviceId) {
@@ -573,7 +580,7 @@
                                         if (badge) badge.textContent = friendData.nickname;
                                     }
                                     const distMeters = Math.round(calculateHaversineDistance(currentCoords, friendLastCoords) * 1000);
-                                    document.getElementById('friendDeviceStatus').textContent = `${friendData.nickname} • A ${distMeters}m`;
+                                    document.getElementById('friendDeviceStatus').textContent = `${friendData.nickname || 'Amigo'} • A ${distMeters}m`;
                                 }
                             }
                         });
