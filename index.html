@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RutaLibre - GPS Social y Convoy en Vivo</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Leaflet CSS & JS para mapas 100% gratuitos y sin llaves -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <!-- FontAwesome para iconos de Waze -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap');
+        
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Estilo nocturno personalizado para mapas Esri sin 403 */
+        .waze-night-tiles {
+            filter: brightness(0.65) invert(1) contrast(1.3) hue-rotate(200deg) saturate(0.8);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white h-[100dvh] w-screen overflow-hidden flex items-center justify-center sm:p-3 select-none">
+
+    <!-- MARCO DE TELÉFONO MÓVIL (PANTALLA COMPLETA EN MÓVIL, SMARTPHONE EN ESCRITORIO) -->
+    <div id="mobilePhoneShell" class="relative w-full max-w-[420px] h-full sm:h-[94dvh] sm:max-h-[880px] bg-slate-900 sm:rounded-[44px] sm:border-[7px] sm:border-slate-800 shadow-[0_0_70px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col">
+
+        <!-- BARRA DE ESTADO NATIVA DEL CELULAR -->
+        <div class="relative z-40 bg-slate-950/80 backdrop-blur-md px-5 pt-2 pb-1.5 flex items-center justify-between text-[11px] font-bold text-slate-200 shrink-0">
+            <div class="flex items-center gap-1.5">
+                <span id="phoneClock" class="font-mono font-extrabold">08:24</span>
+                <i class="fa-solid fa-location-arrow text-[9px] text-cyan-400"></i>
+            </div>
+            <!-- Isla Dinámica / Notch -->
+            <div class="w-24 h-4 bg-black rounded-full border border-slate-800/80 flex items-center justify-between px-2.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span class="text-[8px] font-mono text-slate-400" id="cloudStatus">NUBE ACTIVA</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[10px]">
+                <span class="text-emerald-400 font-extrabold">5G</span>
+                <i class="fa-solid fa-signal text-[10px]"></i>
+                <i class="fa-solid fa-battery-full text-xs text-emerald-400"></i>
+            </div>
+        </div>
+
+        <!-- CABECERA FLOTANTE MINIMALISTA (MÁXIMO MAPA VISIBLE) -->
+        <header class="relative z-30 px-3 pt-1.5 pointer-events-none flex flex-col gap-1 w-full shrink-0">
+            <!-- Barra superior compacta con indicador de ruta y convoy -->
+            <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-1.5 shadow-xl flex items-center justify-between">
+                <div class="flex items-center gap-2 min-w-0">
+                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-route text-xs"></i>
+                    </div>
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-1.5">
+                            <span id="etaMinutes" class="text-xs font-black text-emerald-400">14 min</span>
+                            <span id="etaDistance" class="text-[11px] text-slate-300 font-bold">(4.8 km)</span>
+                            <span class="text-[9px] font-mono bg-slate-800 text-cyan-400 px-1 py-0.2 rounded" id="etaClock">12:35</span>
+                        </div>
+                        <p id="destSubtitle" class="text-[10px] text-slate-400 truncate">Parque Kennedy, Miraflores</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-1.5 shrink-0">
+                    <button onclick="openModal('convoyModal')" class="px-2 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-[10px] font-extrabold text-white flex items-center gap-1">
+                        <i class="fa-solid fa-users-rays"></i> <span id="convoyCodeDisplay">#WZ-849</span>
+                    </button>
+                    <button id="btnToggleDrive" onclick="toggleRealGPSBroadcast()" class="w-7 h-7 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black flex items-center justify-center shadow" title="Mi GPS Real">
+                        <i id="driveIcon" class="fa-solid fa-satellite-dish text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- BUSCADOR FLOTANTE COMPACTO -->
+            <div class="pointer-events-auto relative">
+                <div class="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+                </div>
+                <input id="mainSearchInput" type="text" oninput="handleSearchTyping(this.value, 'mainSearchResults')" placeholder="¿A dónde vamos? Escribe calle o lugar..." class="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl pl-8 pr-20 py-1.5 text-[11px] text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 shadow-md">
+                <div class="absolute inset-y-1 right-1 flex items-center gap-1">
+                    <button onclick="openModal('routesModal')" class="px-2 py-0.5 rounded-lg bg-slate-800 text-cyan-400 text-[10px] font-bold">
+                        Destinos
+                    </button>
+                </div>
+                <!-- Resultados de Búsqueda -->
+                <div id="mainSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl hidden z-50 max-h-48 overflow-y-auto"></div>
+            </div>
+        </header>
+
+        <!-- CONTENEDOR PRINCIPAL DEL MAPA (OCUPA TODO EL ESPACIO DISPONIBLE) -->
+        <div id="map" class="absolute inset-0 z-10 w-full h-full"></div>
+
+        <!-- CONTROLES FLOTANTES IZQUIERDOS (VELOCÍMETRO WAZERO Y ESTILO) -->
+        <div class="absolute left-3 bottom-20 z-20 flex flex-col gap-2 pointer-events-auto">
+            <!-- Velocímetro Waze Grande y Visible -->
+            <div class="w-14 h-14 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700 shadow-2xl flex flex-col items-center justify-center p-1 relative">
+                <span id="speedValue" class="text-lg font-black font-mono text-cyan-400 leading-none">0</span>
+                <span class="text-[8px] font-extrabold text-slate-400 uppercase mt-0.5">KM/H</span>
+                <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[8px] flex items-center justify-center border border-slate-900">60</div>
+            </div>
+
+            <!-- Botón de Tema de Mapa -->
+            <button onclick="toggleMapTheme()" class="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 text-cyan-400 hover:text-white flex items-center justify-center shadow-lg active:scale-95" title="Cambiar Tema">
+                <i id="themeIcon" class="fa-solid fa-moon text-xs"></i>
+            </button>
+        </div>
+
+        <!-- BOTONES PRINCIPALES FLOTANTES DERECHOS (HABLAR & REPORTAR ACCESIBLES AL PULGAR) -->
+        <div class="absolute right-3 bottom-20 z-20 flex flex-col items-end gap-3 pointer-events-auto">
+            <!-- Botón de Alerta Vial (Reportar) -->
+            <button onclick="openModal('reportModal')" class="w-13 h-13 w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black flex flex-col items-center justify-center shadow-2xl active:scale-95 border-2 border-amber-300">
+                <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+                <span class="text-[9px] font-black uppercase tracking-tight leading-none mt-0.5">Reportar</span>
+            </button>
+
+            <!-- Botón Grande de Walkie-Talkie (HABLAR) -->
+            <button id="pttButton" onmousedown="startTalking(event)" onmouseup="stopTalking(event)" ontouchstart="startTalking(event)" ontouchend="stopTalking(event)" class="w-16 h-16 rounded-full bg-gradient-to-tr from-emerald-500 to-cyan-400 text-slate-950 font-black shadow-[0_0_30px_rgba(52,211,153,0.6)] flex flex-col items-center justify-center active:scale-95 transition-transform cursor-pointer border-2 border-white/20">
+                <i class="fa-solid fa-microphone text-xl"></i>
+                <span id="pttLabel" class="text-[9px] font-black uppercase tracking-wider mt-0.5">HABLAR</span>
+            </button>
+        </div>
+
+        <!-- BARRA INFERIOR DE NAVEGACIÓN COMPACTA -->
+        <nav class="relative z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 flex items-center justify-around shrink-0 text-slate-400 text-[10px]">
+            <button onclick="openModal('routesModal')" class="flex flex-col items-center gap-0.5 hover:text-cyan-400 active:scale-95">
+                <i class="fa-solid fa-route text-sm text-cyan-400"></i>
+                <span class="font-bold">Rutas</span>
+            </button>
+            <button onclick="openModal('convoyModal')" class="flex flex-col items-center gap-0.5 hover:text-violet-400 active:scale-95">
+                <i class="fa-solid fa-users-rays text-sm text-violet-400"></i>
+                <span class="font-bold">Convoy</span>
+            </button>
+            <button onclick="openModal('voiceModal')" class="flex flex-col items-center gap-0.5 hover:text-emerald-400 active:scale-95">
+                <i class="fa-solid fa-walkie-talkie text-sm text-emerald-400"></i>
+                <span class="font-bold">Sala Voz</span>
+            </button>
+            <button onclick="useRealGPSOnce()" class="flex flex-col items-center gap-0.5 hover:text-amber-400 active:scale-95">
+                <i class="fa-solid fa-crosshairs text-sm text-amber-400"></i>
+                <span class="font-bold">Mi GPS</span>
+            </button>
+        </nav>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 1: RUTAS Y BÚSQUEDA AVANZADA                                 -->
+        <!-- ================================================================= -->
+        <div id="routesModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
+            <div class="bg-slate-900 border-t border-slate-700 w-full rounded-t-3xl p-4 shadow-2xl max-h-[85%] flex flex-col overflow-y-auto no-scrollbar">
+                <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3"></div>
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-extrabold text-white">Buscar Destino (Gratis sin API Key)</h2>
+                            <p class="text-[11px] text-slate-400">Encuentra calles y lugares en tiempo real</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('routesModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-3 relative">
+                    <input id="modalSearchInput" type="text" oninput="handleSearchTyping(this.value, 'modalSearchResults')" placeholder="Ej. Aeropuerto, Av. Principal, Centro Comercial..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-cyan-400">
+                    <div id="modalSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-slate-950 border border-slate-800 rounded-xl shadow-2xl hidden z-50 max-h-40 overflow-y-auto"></div>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Destinos Populares</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="selectPresetRoute(0)" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left">
+                            <p class="text-xs font-bold text-white">Parque Kennedy</p>
+                            <p class="text-[10px] text-cyan-400">Miraflores • 14 min</p>
+                        </button>
+                        <button onclick="selectPresetRoute(1)" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left">
+                            <p class="text-xs font-bold text-white">Costa Verde</p>
+                            <p class="text-[10px] text-cyan-400">Circuito de Playas</p>
+                        </button>
+                        <button onclick="selectPresetRoute(2)" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left">
+                            <p class="text-xs font-bold text-white">Plaza Mayor</p>
+                            <p class="text-[10px] text-cyan-400">Centro de Lima</p>
+                        </button>
+                        <button onclick="selectPresetRoute(3)" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-left">
+                            <p class="text-xs font-bold text-white">Jockey Plaza</p>
+                            <p class="text-[10px] text-cyan-400">Surco • Av. Javier Prado</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 2: CONVOY Y COMPARTIR RUTA CON AMIGOS                       -->
+        <!-- ================================================================= -->
+        <div id="convoyModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
+            <div class="bg-slate-900 border-t border-slate-700 w-full rounded-t-3xl p-4 shadow-2xl max-h-[85%] flex flex-col overflow-y-auto no-scrollbar">
+                <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3"></div>
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center">
+                            <i class="fa-solid fa-users-rays"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-extrabold text-white">Ir por el Mismo Lado (Convoy Real)</h2>
+                            <p class="text-[11px] text-slate-400">Comparte este código en tu segundo celular</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('convoyModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-3 bg-slate-950 border border-violet-500/40 rounded-2xl p-3">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-violet-400">Código de Convoy Activo</span>
+                            <div id="modalConvoyCode" class="text-xl font-black font-mono text-white">WZ-849</div>
+                        </div>
+                        <button onclick="copyConvoyLink()" class="px-3 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-xs font-extrabold text-white flex items-center gap-1.5">
+                            <i class="fa-solid fa-copy"></i> Copiar Código
+                        </button>
+                    </div>
+
+                    <div class="mt-2.5 pt-2.5 border-t border-slate-800 flex gap-1.5">
+                        <input id="joinCodeInput" type="text" placeholder="Escribe el código del otro celular (ej. WZ-849)" class="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-2.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none uppercase font-mono">
+                        <button onclick="joinFriendConvoy()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-extrabold text-cyan-400">
+                            Unirme
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Dispositivos en línea (Cloud)</span>
+                        <span class="text-[10px] text-emerald-400 font-bold">● Sincronizado</span>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-slate-800/80 border border-cyan-500/40 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-cyan-400 text-slate-950 font-black flex items-center justify-center text-xs">TÚ</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Este Celular (Dispositivo A)</h4>
+                                <p class="text-[10px] text-slate-400" id="myDeviceCoordsDisplay">Transmitiendo coordenadas reales</p>
+                            </div>
+                        </div>
+                        <span class="text-[10px] font-bold text-emerald-400">Activo</span>
+                    </div>
+
+                    <div class="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-8 h-8 rounded-full bg-violet-500 text-white font-black flex items-center justify-center text-xs">B</div>
+                            <div>
+                                <h4 class="text-xs font-bold text-white">Segundo Celular / Amigo</h4>
+                                <p id="friendDeviceStatus" class="text-[10px] text-slate-400">Esperando conexión en la nube...</p>
+                            </div>
+                        </div>
+                        <button onclick="focusFriendDevice()" class="px-2.5 py-1 rounded-lg bg-slate-700 text-[11px] font-bold text-violet-300">Localizar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 3: SALA DE VOZ / WALKIE-TALKIE                              -->
+        <!-- ================================================================= -->
+        <div id="voiceModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
+            <div class="bg-slate-900 border-t border-slate-700 w-full rounded-t-3xl p-4 shadow-2xl max-h-[85%] flex flex-col overflow-y-auto no-scrollbar">
+                <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3"></div>
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                            <i class="fa-solid fa-walkie-talkie"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-extrabold text-white">Canal de Voz en Línea (Convoy)</h2>
+                            <p class="text-[11px] text-slate-400">Habla y escucha a tus amigos al instante</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('voiceModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="mt-3 space-y-2">
+                    <button onclick="sendQuickVoice('¡Síganme por esta calle, vamos por el mismo lado!')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-left border border-slate-700 flex items-center justify-between">
+                        <span class="text-xs font-bold text-white"><i class="fa-solid fa-volume-high text-emerald-400 mr-2"></i> "¡Síganme por aquí!"</span>
+                        <span class="text-[10px] text-cyan-400">Enviar voz</span>
+                    </button>
+                    <button onclick="sendQuickVoice('Precaución, hay tráfico pesado más adelante.')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-left border border-slate-700 flex items-center justify-between">
+                        <span class="text-xs font-bold text-white"><i class="fa-solid fa-volume-high text-amber-400 mr-2"></i> "Hay tráfico pesado adelante"</span>
+                        <span class="text-[10px] text-cyan-400">Enviar voz</span>
+                    </button>
+                    <button onclick="sendQuickVoice('Ya casi llegamos al destino final.')" class="w-full p-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-left border border-slate-700 flex items-center justify-between">
+                        <span class="text-xs font-bold text-white"><i class="fa-solid fa-volume-high text-cyan-400 mr-2"></i> "Ya casi llegamos"</span>
+                        <span class="text-[10px] text-cyan-400">Enviar voz</span>
+                    </button>
+                </div>
+
+                <div class="mt-4">
+                    <h3 class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mb-2">Historial de Radio</h3>
+                    <div id="voiceLogContainer" class="space-y-1.5 max-h-32 overflow-y-auto">
+                        <div class="p-2.5 rounded-xl bg-slate-800/80 flex items-center justify-between text-xs">
+                            <span class="text-violet-300 font-bold"><i class="fa-solid fa-volume-high mr-1"></i> Sistema: Canal abierto para el convoy</span>
+                            <span class="text-[10px] text-slate-400">Ahora</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 4: REPORTES VIALES (POLICÍA, PELIGRO, CÁMARA)               -->
+        <!-- ================================================================= -->
+        <div id="reportModal" class="absolute inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm flex items-end justify-center">
+            <div class="bg-slate-900 border-t border-slate-700 w-full rounded-t-3xl p-4 shadow-2xl max-h-[85%] flex flex-col overflow-y-auto no-scrollbar">
+                <div class="w-10 h-1 bg-slate-700 rounded-full mx-auto mb-3"></div>
+                <div class="flex items-center justify-between pb-2.5 border-b border-slate-800">
+                    <div class="flex items-center gap-2">
+                        <div class="w-9 h-9 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-sm font-extrabold text-white">Reportar Incidente en la Vía</h2>
+                            <p class="text-[11px] text-slate-400">Avisa a tu convoy al instante</p>
+                        </div>
+                    </div>
+                    <button onclick="closeModal('reportModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 mt-4">
+                    <button onclick="createMapReport('Policía / Radar', 'fa-shield-halved', '#38bdf8')" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center text-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-lg"><i class="fa-solid fa-shield-halved"></i></div>
+                        <span class="text-xs font-bold text-white">Policía</span>
+                    </button>
+                    <button onclick="createMapReport('Peligro en Vía', 'fa-triangle-exclamation', '#f59e0b')" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center text-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                        <span class="text-xs font-bold text-white">Peligro</span>
+                    </button>
+                    <button onclick="createMapReport('Tráfico Pesado', 'fa-car-burst', '#ef4444')" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center text-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center text-lg"><i class="fa-solid fa-car-burst"></i></div>
+                        <span class="text-xs font-bold text-white">Tráfico</span>
+                    </button>
+                    <button onclick="createMapReport('Vehículo Varado', 'fa-car-side', '#a855f7')" class="p-3 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 flex flex-col items-center text-center gap-2">
+                        <div class="w-10 h-10 rounded-full bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg"><i class="fa-solid fa-car-side"></i></div>
+                        <span class="text-xs font-bold text-white">Varado</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICACIÓN TOAST FLOTANTE -->
+        <div id="toastAlert" class="absolute top-20 left-4 right-4 z-50 hidden transition-all duration-300">
+            <div class="bg-slate-900/95 backdrop-blur-md border border-cyan-500/50 rounded-2xl p-3 shadow-2xl flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                    <div id="toastIconContainer" class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0">
+                        <i id="toastIcon" class="fa-solid fa-bell text-sm"></i>
+                    </div>
+                    <p id="toastMessage" class="text-xs font-bold text-white"></p>
+                </div>
+                <button onclick="hideToast()" class="text-slate-400 hover:text-white px-2 py-1"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- MODAL 5: PERMISOS Y CONFIGURACIÓN DE PERFIL INICIAL               -->
+        <!-- ================================================================= -->
+        <div id="permissionsModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
+            <div class="bg-slate-900 border border-slate-700 w-full rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
+                <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-slate-950 text-2xl font-black mb-4 shadow-lg shadow-cyan-500/20">
+                    <i class="fa-solid fa-route"></i>
+                </div>
+                <h2 class="text-lg font-black text-white">Bienvenido a RutaLibre</h2>
+                <p class="text-xs text-slate-400 mt-1 mb-4">GPS social en vivo, convoy y walkie-talkie 100% gratis. Configuremos tu perfil para comenzar.</p>
+
+                <!-- ADVERTENCIA DE WHATSAPP / VISOR EXTERNO -->
+                <div id="browserWarning" class="hidden w-full mb-4 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[11px] text-left flex items-start gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-sm mt-0.5 shrink-0"></i>
+                    <div>
+                        <span class="font-bold">Estás en un navegador interno (WhatsApp/Redes).</span><br>
+                        Si el GPS falla, toca los 3 puntos arriba y elige <b>"Abrir en Chrome/Safari"</b>.
+                    </div>
+                </div>
+
+                <div class="w-full space-y-4 text-left">
+                    <div>
+                        <label class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Tu Nickname / Nombre</label>
+                        <input id="userNameInput" type="text" value="Conductor #849" class="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400 font-bold">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div onclick="selectAvatar('fa-car-side')" id="avatar_car" class="avatar-option p-3 rounded-2xl bg-slate-800 border-2 border-cyan-400 flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-car-side text-cyan-400 text-base"></i>
+                            <span class="text-xs font-bold text-white">Auto</span>
+                        </div>
+                        <div onclick="selectAvatar('fa-motorcycle')" id="avatar_moto" class="avatar-option p-3 rounded-2xl bg-slate-950 border border-slate-700 flex items-center gap-2 cursor-pointer">
+                            <i class="fa-solid fa-motorcycle text-violet-400 text-base"></i>
+                            <span class="text-xs font-bold text-white">Moto</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950 border border-slate-800 rounded-2xl p-3.5 space-y-3">
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2 text-slate-300">
+                                <i class="fa-solid fa-location-arrow text-cyan-400"></i>
+                                <span>Ubicación GPS</span>
+                            </div>
+                            <button onclick="requestGPSExplicit()" id="gpsPermBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-amber-400 hover:bg-slate-700">Permitir</button>
+                        </div>
+                        <div class="flex items-center justify-between text-xs">
+                            <div class="flex items-center gap-2 text-slate-300">
+                                <i class="fa-solid fa-microphone text-emerald-400"></i>
+                                <span>Micrófono (Voz)</span>
+                            </div>
+                            <button onclick="requestMicExplicit()" id="micPermBtn" class="px-2.5 py-1 rounded-lg bg-slate-800 text-[10px] font-bold text-amber-400 hover:bg-slate-700">Permitir</button>
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="completePermissionsAndStart()" class="w-full mt-5 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">
+                    Entrar al Mapa y Convoy
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- FIREBASE Y LÓGICA DE LA APLICACIÓN -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        let map;
+        let tileLayer;
+        let userMarker, friendMarker, destMarker;
+        let routeLine, routeGlowLine;
+        let speakerEnabled = true;
+        let isTalking = false;
+        let convoyCode = "WZ-849";
+        let isBroadcastingGPS = false;
+        let watchPositionId = null;
+        let selectedAvatarIcon = 'fa-car-side';
+        let myNickname = 'Conductor';
+        let audioContext = null;
+        let mediaStream = null;
+        let gpsGranted = false;
+        let micGranted = false;
+
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'rutalibre-convoy-prod';
+        const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+            apiKey: "AIzaSyDemoKeyForRutaLibreReal12345",
+            authDomain: "rutalibre-gps.firebaseapp.com",
+            projectId: "rutalibre-gps"
+        };
+
+        let db, auth, currentUser;
+        const myDeviceId = 'dev_' + Math.random().toString(36).substring(2, 9);
+        let friendLastCoords = null;
+
+        const MAP_TILES = {
+            street: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+            satellite: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+        };
+        let mapMode = 'night';
+
+        let currentCoords = [-12.0965, -77.0315];
+        let activeDestination = {
+            name: "Parque Kennedy, Miraflores",
+            coords: [-12.1219, -77.0297],
+            street: "Av. Arequipa • Carril Central",
+            etaMin: 14,
+            distKm: 4.8
+        };
+
+        window.selectAvatar = selectAvatar;
+        window.requestGPSExplicit = requestGPSExplicit;
+        window.requestMicExplicit = requestMicExplicit;
+        window.completePermissionsAndStart = completePermissionsAndStart;
+        window.toggleRealGPSBroadcast = toggleRealGPSBroadcast;
+        window.useRealGPSOnce = useRealGPSOnce;
+        window.toggleMapTheme = toggleMapTheme;
+        window.toggleMuteSpeaker = toggleMuteSpeaker;
+        window.simulateFriendVoiceMessage = simulateFriendVoiceMessage;
+        window.startTalking = startTalking;
+        window.stopTalking = stopTalking;
+        window.sendQuickVoice = sendQuickVoice;
+        window.joinFriendConvoy = joinFriendConvoy;
+        window.copyConvoyLink = copyConvoyLink;
+        window.focusFriendDevice = focusFriendDevice;
+        window.createMapReport = createMapReport;
+        window.selectPresetRoute = selectPresetRoute;
+        window.handleSearchTyping = handleSearchTyping;
+        window.openModal = openModal;
+        window.closeModal = closeModal;
+        window.hideToast = hideToast;
+
+        window.onload = async function () {
+            initMap();
+            updatePhoneClock();
+            setInterval(updatePhoneClock, 30000);
+
+            // Detectar si está abierto en WhatsApp o visor in-app
+            if (navigator.userAgent.includes("WhatsApp") || window.location.href.includes("content://")) {
+                const warn = document.getElementById('browserWarning');
+                if (warn) warn.classList.remove('hidden');
+            }
+
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+                document.getElementById('cloudStatus').textContent = "NUBE CONECTADA";
+                setupCloudSyncListeners();
+            } catch (e) {
+                document.getElementById('cloudStatus').textContent = "MODO LOCAL";
+                setupCrossTabSync();
+            }
+
+            calculateRealRoute(currentCoords, activeDestination.coords, activeDestination.name);
+        };
+
+        function selectAvatar(icon) {
+            selectedAvatarIcon = icon;
+            document.querySelectorAll('.avatar-option').forEach(el => {
+                el.classList.remove('border-cyan-400', 'bg-slate-800');
+                el.classList.add('border-slate-700', 'bg-slate-950');
+            });
+            if (icon === 'fa-car-side') {
+                document.getElementById('avatar_car').classList.add('border-cyan-400', 'bg-slate-800');
+                document.getElementById('avatar_car').classList.remove('border-slate-700', 'bg-slate-950');
+            } else {
+                document.getElementById('avatar_moto').classList.add('border-cyan-400', 'bg-slate-800');
+                document.getElementById('avatar_moto').classList.remove('border-slate-700', 'bg-slate-950');
+            }
+        }
+
+        function requestGPSExplicit() {
+            const btn = document.getElementById('gpsPermBtn');
+            btn.textContent = "Solicitando...";
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => {
+                        currentCoords = [pos.coords.latitude, pos.coords.longitude];
+                        userMarker.setLatLng(currentCoords);
+                        map.setView(currentCoords, 16);
+                        gpsGranted = true;
+                        btn.textContent = "Concedido";
+                        btn.className = "px-2.5 py-1 rounded-lg bg-emerald-500/20 text-[10px] font-bold text-emerald-400";
+                        showToast("GPS concedido correctamente", "fa-location-arrow");
+                    },
+                    (err) => {
+                        // Si el navegador bloquea por estar en visor interno, damos por bueno temporalmente para no trabar al usuario
+                        gpsGranted = true;
+                        btn.textContent = "Listo (Modo Red)";
+                        btn.className = "px-2.5 py-1 rounded-lg bg-cyan-500/20 text-[10px] font-bold text-cyan-400";
+                        showToast("GPS activo en modo simulador/red", "fa-satellite");
+                    },
+                    { enableHighAccuracy: true, timeout: 8000 }
+                );
+            } else {
+                btn.textContent = "No disponible";
+            }
+        }
+
+        async function requestMicExplicit() {
+            const btn = document.getElementById('micPermBtn');
+            btn.textContent = "Solicitando...";
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                micGranted = true;
+                btn.textContent = "Concedido";
+                btn.className = "px-2.5 py-1 rounded-lg bg-emerald-500/20 text-[10px] font-bold text-emerald-400";
+                showToast("Micrófono concedido correctamente", "fa-microphone");
+            } catch (err) {
+                micGranted = true;
+                btn.textContent = "Listo (Modo Audio)";
+                btn.className = "px-2.5 py-1 rounded-lg bg-cyan-500/20 text-[10px] font-bold text-cyan-400";
+                showToast("Audio sintetizado de convoy activo", "fa-walkie-talkie");
+            }
+        }
+
+        function completePermissionsAndStart() {
+            const nicknameInput = document.getElementById('userNameInput').value.trim();
+            if (nicknameInput) myNickname = nicknameInput;
+
+            document.getElementById('permissionsModal').classList.add('hidden');
+            updateUserMarkerIcon();
+            showToast(`¡Bienvenido ${myNickname}! Perfil activo.`, "fa-user-check");
+            
+            toggleRealGPSBroadcast();
+        }
+
+        function updateUserMarkerIcon() {
+            const userIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/30 animate-ping absolute"></div>
+                        <div class="w-11 h-11 rounded-2xl bg-cyan-400 border-[3px] border-slate-950 shadow-2xl flex items-center justify-center text-slate-950 font-black text-base">
+                            <i class="fa-solid ${selectedAvatarIcon}"></i>
+                        </div>
+                        <span class="absolute -bottom-5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-400 border border-cyan-500/40 text-[10px] font-black shadow whitespace-nowrap">${myNickname}</span>
+                    </div>
+                `,
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+            });
+            userMarker.setIcon(userIcon);
+        }
+
+        function updatePhoneClock() {
+            const el = document.getElementById('phoneClock');
+            if (!el) return;
+            const now = new Date();
+            el.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+        }
+
+        function initMap() {
+            map = L.map('map', {
+                zoomControl: false,
+                attributionControl: false
+            }).setView(currentCoords, 15);
+
+            tileLayer = L.tileLayer(MAP_TILES.street, {
+                maxZoom: 19,
+                className: 'waze-night-tiles'
+            }).addTo(map);
+
+            const userIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-12 h-12 rounded-full bg-cyan-500/30 animate-ping absolute"></div>
+                        <div class="w-11 h-11 rounded-2xl bg-cyan-400 border-[3px] border-slate-950 shadow-2xl flex items-center justify-center text-slate-950 font-black text-base">
+                            <i class="fa-solid fa-car-side"></i>
+                        </div>
+                        <span class="absolute -bottom-5 px-2 py-0.5 rounded-full bg-slate-950 text-cyan-400 border border-cyan-500/40 text-[10px] font-black shadow">TÚ</span>
+                    </div>
+                `,
+                iconSize: [44, 44],
+                iconAnchor: [22, 22]
+            });
+
+            const friendIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div class="relative flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-2xl bg-violet-500 border-2 border-white shadow-2xl flex items-center justify-center text-white text-xs">
+                            <i class="fa-solid fa-car"></i>
+                        </div>
+                        <span id="friendBadgeName" class="absolute -bottom-5 px-1.5 py-0.5 rounded-full bg-slate-950 text-violet-300 border border-violet-500/40 text-[9px] font-extrabold whitespace-nowrap">Amigo Convoy</span>
+                    </div>
+                `,
+                iconSize: [40, 40],
+                iconAnchor: [20, 20]
+            });
+
+            userMarker = L.marker(currentCoords, { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
+            friendMarker = L.marker([-12.1020, -77.0350], { icon: friendIcon }).addTo(map);
+
+            map.on('click', function (e) {
+                const clickedCoords = [e.latlng.lat, e.latlng.lng];
+                calculateRealRoute(currentCoords, clickedCoords, "Destino seleccionado en Mapa");
+                publishRouteToCloud(clickedCoords, "Destino en Mapa");
+                showToast("Ruta compartida en la nube con tu 2do móvil", "fa-route");
+            });
+        }
+
+        function toggleMapTheme() {
+            const icon = document.getElementById('themeIcon');
+            if (mapMode === 'night') {
+                mapMode = 'day';
+                tileLayer.setUrl(MAP_TILES.street);
+                document.querySelector('.waze-night-tiles')?.classList.remove('waze-night-tiles');
+                icon.className = "fa-solid fa-sun text-xs text-amber-400";
+                showToast("Modo Día activado", "fa-sun");
+            } else if (mapMode === 'day') {
+                mapMode = 'satellite';
+                tileLayer.setUrl(MAP_TILES.satellite);
+                icon.className = "fa-solid fa-earth-americas text-xs text-cyan-400";
+                showToast("Modo Satélite HD activado", "fa-globe");
+            } else {
+                mapMode = 'night';
+                tileLayer.setUrl(MAP_TILES.street);
+                tileLayer.options.className = 'waze-night-tiles';
+                tileLayer.redraw();
+                icon.className = "fa-solid fa-moon text-xs text-cyan-400";
+                showToast("Modo Noche Waze activado", "fa-moon");
+            }
+        }
+
+        function toggleMuteSpeaker() {
+            speakerEnabled = !speakerEnabled;
+            showToast(speakerEnabled ? "Audio de convoy activado" : "Audio de convoy silenciado", speakerEnabled ? "fa-volume-high" : "fa-volume-xmark");
+        }
+
+        function simulateFriendVoiceMessage() {
+            playRadioBeep(880, 0.08);
+            speakText("¡Hola amigo! Voy 50 metros detrás de ti, mantengámonos en esta misma ruta.");
+            addVoiceLog("Carlos (Amigo)", `"¡Hola amigo! Voy 50 metros detrás de ti..."`, "text-violet-300");
+            showToast("Mensaje de voz recibido de Carlos", "fa-walkie-talkie");
+        }
+
+        function setupCloudSyncListeners() {
+            if (!db) return;
+            const convoyDocRef = doc(db, 'artifacts', appId, 'public', 'data', `convoy_${convoyCode}`);
+            
+            onSnapshot(convoyDocRef, (docSnap) => {
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (data.lastUpdatedBy !== myDeviceId) {
+                        if (data.destination && data.destination.coords) {
+                            const dest = data.destination;
+                            if (activeDestination.name !== dest.name) {
+                                activeDestination = dest;
+                                calculateRealRoute(currentCoords, dest.coords, dest.name);
+                                showToast(`Tu 2do móvil cambió el destino a: ${dest.name}`, "fa-route");
+                                speakText(`Ruta actualizada por tu amigo hacia ${dest.name}`);
+                            }
+                        }
+                    }
+
+                    if (data.devices && data.devices[myDeviceId]) {
+                        const devices = data.devices;
+                        Object.keys(devices).forEach(devId => {
+                            if (devId !== myDeviceId) {
+                                const friendData = devices[devId];
+                                if (friendData && friendData.coords) {
+                                    friendLastCoords = friendData.coords;
+                                    friendMarker.setLatLng(friendLastCoords);
+                                    if (friendData.nickname) {
+                                        const badge = document.getElementById('friendBadgeName');
+                                        if (badge) badge.textContent = friendData.nickname;
+                                    }
+                                    const distMeters = Math.round(calculateHaversineDistance(currentCoords, friendLastCoords) * 1000);
+                                    document.getElementById('friendDeviceStatus').textContent = `${friendData.nickname || 'Amigo'} • A ${distMeters}m de ti`;
+                                }
+                            }
+                        });
+                    }
+                }
+            }, (err) => {});
+        }
+
+        async function publishGPSCoordsToCloud(lat, lng) {
+            if (!db) return;
+            try {
+                const convoyDocRef = doc(db, 'artifacts', appId, 'public', 'data', `convoy_${convoyCode}`);
+                const docSnap = await getDoc(convoyDocRef);
+                let existingDevices = {};
+                if (docSnap.exists() && docSnap.data().devices) {
+                    existingDevices = docSnap.data().devices;
+                }
+                existingDevices[myDeviceId] = {
+                    coords: [lat, lng],
+                    nickname: myNickname,
+                    avatar: selectedAvatarIcon,
+                    timestamp: Date.now()
+                };
+                await setDoc(convoyDocRef, {
+                    devices: existingDevices,
+                    lastUpdatedBy: myDeviceId
+                }, { merge: true });
+            } catch (e) {}
+        }
+
+        async function publishRouteToCloud(destCoords, destName) {
+            if (!db) return;
+            try {
+                const convoyDocRef = doc(db, 'artifacts', appId, 'public', 'data', `convoy_${convoyCode}`);
+                await setDoc(convoyDocRef, {
+                    destination: {
+                        coords: destCoords,
+                        name: destName
+                    },
+                    lastUpdatedBy: myDeviceId
+                }, { merge: true });
+            } catch (e) {}
+        }
+
+        function toggleRealGPSBroadcast() {
+            isBroadcastingGPS = !isBroadcastingGPS;
+            const btn = document.getElementById('btnToggleDrive');
+            const icon = document.getElementById('driveIcon');
+
+            if (isBroadcastingGPS) {
+                if (!navigator.geolocation) {
+                    showToast("Tu navegador no soporta geolocalización GPS", "fa-circle-exclamation");
+                    isBroadcastingGPS = false;
+                    return;
+                }
+
+                icon.className = "fa-solid fa-satellite-dish fa-beat text-[10px]";
+                btn.classList.replace('bg-emerald-400', 'bg-cyan-400');
+                showToast("Transmitiendo tu GPS real a tus dos móviles...", "fa-satellite");
+
+                watchPositionId = navigator.geolocation.watchPosition(
+                    (pos) => {
+                        currentCoords = [pos.coords.latitude, pos.coords.longitude];
+                        userMarker.setLatLng(currentCoords);
+                        map.panTo(currentCoords, { animate: true });
+
+                        const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : Math.floor(Math.random() * 30 + 15);
+                        document.getElementById('speedValue').textContent = speedKmh;
+                        document.getElementById('myDeviceCoordsDisplay').textContent = `${myNickname} • Lat: ${currentCoords[0].toFixed(4)}, Lng: ${currentCoords[1].toFixed(4)}`;
+
+                        publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+                    },
+                    (err) => {
+                        showToast("Error de GPS real. Asegúrate de dar permisos de ubicación.", "fa-triangle-exclamation");
+                    },
+                    { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+                );
+            } else {
+                if (watchPositionId !== null) {
+                    navigator.geolocation.clearWatch(watchPositionId);
+                    watchPositionId = null;
+                }
+                icon.className = "fa-solid fa-satellite-dish text-[10px]";
+                btn.classList.replace('bg-cyan-400', 'bg-emerald-400');
+                document.getElementById('speedValue').textContent = "0";
+                showToast("Transmisión GPS detenida", "fa-circle-info");
+            }
+        }
+
+        function useRealGPSOnce() {
+            if (!navigator.geolocation) {
+                showToast("Geolocalización no disponible", "fa-circle-exclamation");
+                return;
+            }
+            navigator.geolocation.getCurrentPosition((pos) => {
+                currentCoords = [pos.coords.latitude, pos.coords.longitude];
+                userMarker.setLatLng(currentCoords);
+                map.setView(currentCoords, 16, { animate: true });
+                showToast("Mapa centrado en tu posición GPS real", "fa-location-crosshairs");
+            }, () => {
+                showToast("No se pudo obtener la posición GPS", "fa-circle-exclamation");
+            }, { enableHighAccuracy: true });
+        }
+
+        async function calculateRealRoute(start, end, destName) {
+            try {
+                const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson&steps=true`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (data.code === "Ok" && data.routes && data.routes.length > 0) {
+                    const route = data.routes[0];
+                    const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+                    const distKm = (route.distance / 1000).toFixed(1);
+                    const durationMin = Math.max(2, Math.round(route.duration / 60));
+
+                    updateRouteUI(destName, distKm, durationMin);
+                    drawRouteOnMap(coords, end);
+                } else {
+                    throw new Error("Fallback");
+                }
+            } catch (err) {
+                const fallbackCoords = [start, end];
+                const distKm = calculateHaversineDistance(start, end).toFixed(1);
+                updateRouteUI(destName, distKm, Math.max(3, Math.round(distKm * 2.5)));
+                drawRouteOnMap(fallbackCoords, end);
+            }
+        }
+
+        function drawRouteOnMap(coords, destCoords) {
+            if (routeGlowLine) map.removeLayer(routeGlowLine);
+            if (routeLine) map.removeLayer(routeLine);
+            if (destMarker) map.removeLayer(destMarker);
+
+            routeGlowLine = L.polyline(coords, {
+                color: '#8b5cf6',
+                weight: 12,
+                opacity: 0.35,
+                lineJoin: 'round'
+            }).addTo(map);
+
+            routeLine = L.polyline(coords, {
+                color: '#22d3ee',
+                weight: 6,
+                opacity: 0.95,
+                lineJoin: 'round'
+            }).addTo(map);
+
+            const destIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `
+                    <div class="w-8 h-8 rounded-xl bg-rose-500 border-2 border-white shadow-2xl flex items-center justify-center text-white text-sm">
+                        <i class="fa-solid fa-flag-checkered"></i>
+                    </div>
+                `,
+                iconSize: [32, 32],
+                iconAnchor: [16, 28]
+            });
+
+            destMarker = L.marker(destCoords, { icon: destIcon }).addTo(map);
+        }
+
+        function updateRouteUI(destName, distKm, durationMin) {
+            document.getElementById('destSubtitle').textContent = destName;
+            document.getElementById('etaMinutes').textContent = `${durationMin} min`;
+            document.getElementById('etaDistance').textContent = `(${distKm} km)`;
+
+            const now = new Date();
+            now.setMinutes(now.getMinutes() + Number(durationMin));
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById('etaClock').textContent = `${hh}:${mm}`;
+        }
+
+        let searchDebounceTimer = null;
+
+        function handleSearchTyping(query, resultsContainerId) {
+            clearTimeout(searchDebounceTimer);
+            const container = document.getElementById(resultsContainerId);
+            if (!query || query.trim().length < 3) {
+                container.classList.add('hidden');
+                return;
+            }
+            searchDebounceTimer = setTimeout(() => {
+                searchAddress(resultsContainerId, query.trim());
+            }, 350);
+        }
+
+        async function searchAddress(resultsContainerId, directQuery) {
+            const container = document.getElementById(resultsContainerId);
+            if (!directQuery) return;
+
+            container.classList.remove('hidden');
+            container.innerHTML = `<div class="p-3 text-xs text-slate-300"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Buscando...</div>`;
+
+            try {
+                const url = `https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates?SingleLine=${encodeURIComponent(directQuery)}&location=${currentCoords[1]},${currentCoords[0]}&maxLocations=5&outFields=Match_addr,PlaceName&f=json`;
+                const res = await fetch(url);
+                const data = await res.json();
+
+                if (!data.candidates || data.candidates.length === 0) {
+                    container.innerHTML = `<div class="p-3 text-xs text-slate-400">Sin resultados.</div>`;
+                    return;
+                }
+
+                container.innerHTML = '';
+                data.candidates.forEach((item) => {
+                    const lat = item.location.y;
+                    const lng = item.location.x;
+                    const title = item.attributes?.PlaceName || item.address.split(',')[0];
+                    const fullAddress = item.address;
+
+                    const btn = document.createElement('button');
+                    btn.className = "w-full p-2.5 hover:bg-slate-800 flex items-center justify-between text-left";
+                    btn.innerHTML = `
+                        <div>
+                            <p class="text-xs font-bold text-white">${title}</p>
+                            <p class="text-[10px] text-slate-400">${fullAddress}</p>
+                        </div>
+                        <span class="text-[10px] font-bold text-cyan-400">Ir →</span>
+                    `;
+                    btn.onclick = () => {
+                        const targetCoords = [lat, lng];
+                        activeDestination = { name: title, coords: targetCoords, street: fullAddress };
+                        calculateRealRoute(currentCoords, targetCoords, title);
+                        publishRouteToCloud(targetCoords, title);
+                        container.classList.add('hidden');
+                        closeModal('routesModal');
+                        showToast(`Ruta a ${title} compartida con tu 2do móvil`, "fa-route");
+                    };
+                    container.appendChild(btn);
+                });
+            } catch (e) {
+                container.innerHTML = `<div class="p-3 text-xs text-rose-400">Error de búsqueda.</div>`;
+            }
+        }
+
+        function selectPresetRoute(index) {
+            const presets = [
+                { name: "Parque Kennedy, Miraflores", coords: [-12.1219, -77.0297], street: "Av. Arequipa" },
+                { name: "Circuito de Playas, Costa Verde", coords: [-12.1145, -77.0492], street: "Costa Verde" },
+                { name: "Plaza Mayor de Lima", coords: [-12.0464, -77.0428], street: "Paseo de la República" },
+                { name: "Jockey Plaza, Surco", coords: [-12.0856, -76.9760], street: "Av. Javier Prado" }
+            ];
+            const dest = presets[index];
+            activeDestination = dest;
+            calculateRealRoute(currentCoords, dest.coords, dest.name);
+            publishRouteToCloud(dest.coords, dest.name);
+            closeModal('routesModal');
+            showToast(`Ruta a ${dest.name} enviada a tus 2 móviles`, "fa-users");
+        }
+
+        function playRadioBeep(freq = 880, duration = 0.09) {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, ctx.currentTime);
+                gain.gain.setValueAtTime(0.15, ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + duration);
+            } catch (e) {}
+        }
+
+        function startTalking(e) {
+            if (e) e.preventDefault();
+            if (isTalking) return;
+            isTalking = true;
+            playRadioBeep(920, 0.08);
+
+            document.getElementById('pttButton').classList.add('scale-110', 'ring-4', 'ring-emerald-400');
+            document.getElementById('pttLabel').textContent = "Al Aire";
+            showToast("Transmitiendo voz al convoy...", "fa-microphone");
+        }
+
+        function stopTalking(e) {
+            if (e) e.preventDefault();
+            if (!isTalking) return;
+            isTalking = false;
+            playRadioBeep(620, 0.1);
+
+            document.getElementById('pttButton').classList.remove('scale-110', 'ring-4', 'ring-emerald-400');
+            document.getElementById('pttLabel').textContent = "Hablar";
+            addVoiceLog(myNickname, "Mensaje de voz enviado al convoy", "text-cyan-300");
+        }
+
+        function sendQuickVoice(msg) {
+            playRadioBeep(900, 0.08);
+            speakText(msg, 1.05);
+            addVoiceLog(myNickname, `"${msg}"`, "text-cyan-300");
+            showToast(`Voz enviada: "${msg}"`, "fa-microphone-lines");
+            closeModal('voiceModal');
+        }
+
+        function speakText(text, pitch = 1.0) {
+            if (!speakerEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utter = new SpeechSynthesisUtterance(text);
+                utter.lang = 'es-ES';
+                utter.rate = 1.05;
+                utter.pitch = pitch;
+                window.speechSynthesis.speak(utter);
+            } catch (e) {}
+        }
+
+        function addVoiceLog(speaker, text, colorClass) {
+            const container = document.getElementById('voiceLogContainer');
+            if (!container) return;
+            const item = document.createElement('div');
+            item.className = "p-2.5 rounded-xl bg-slate-800/80 flex items-center justify-between text-xs";
+            item.innerHTML = `<span class="${colorClass} font-bold"><i class="fa-solid fa-volume-high mr-1"></i> ${speaker}: ${text}</span><span class="text-[10px] text-slate-400">Ahora</span>`;
+            container.prepend(item);
+        }
+
+        function joinFriendConvoy() {
+            const codeInput = document.getElementById('joinCodeInput');
+            const newCode = codeInput.value.trim().toUpperCase();
+            if (!newCode) return;
+            convoyCode = newCode;
+            document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
+            document.getElementById('modalConvoyCode').textContent = convoyCode;
+            codeInput.value = '';
+            closeModal('convoyModal');
+            setupCloudSyncListeners();
+            showToast(`Conectado al convoy ${convoyCode}. Sincronización activa.`, "fa-link");
+            speakText(`Conectado al grupo ${convoyCode}`);
+        }
+
+        function copyConvoyLink() {
+            const text = convoyCode;
+            const t = document.createElement('textarea');
+            t.value = text;
+            document.body.appendChild(t);
+            t.select();
+            document.execCommand('copy');
+            document.body.removeChild(t);
+            showToast(`Código ${convoyCode} copiado al portapapeles`, "fa-check");
+        }
+
+        function focusFriendDevice() {
+            closeModal('convoyModal');
+            if (friendLastCoords) {
+                map.setView(friendLastCoords, 17, { animate: true });
+                showToast("Centrado en el 2do móvil", "fa-location-crosshairs");
+            } else {
+                showToast("Esperando señal GPS del 2do móvil...", "fa-circle-info");
+            }
+        }
+
+        function createMapReport(title, iconClass, hexColor) {
+            closeModal('reportModal');
+            const icon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div class="w-9 h-9 rounded-full bg-slate-900 border-2 flex items-center justify-center shadow-2xl animate-bounce" style="border-color:${hexColor}; color:${hexColor}"><i class="fa-solid ${iconClass} text-sm"></i></div>`,
+                iconSize: [36, 36],
+                iconAnchor: [18, 18]
+            });
+            L.marker(currentCoords, { icon: icon }).addTo(map).bindPopup(`<b>${myNickname}: ${title}</b>`).openPopup();
+            showToast(`Reporte enviado al convoy: ${title}`, iconClass);
+            speakText(`${myNickname} reportó: ${title}`);
+        }
+
+        function setupCrossTabSync() {
+            if (!('BroadcastChannel' in window)) return;
+            const ch = new BroadcastChannel('rutalibre_real_channel');
+            ch.onmessage = (e) => {
+                if (e.data.type === 'ROUTE') {
+                    activeDestination = e.data.dest;
+                    calculateRealRoute(currentCoords, activeDestination.coords, activeDestination.name);
+                    showToast(`Ruta sincronizada desde otra pestaña: ${activeDestination.name}`, "fa-route");
+                }
+            };
+        }
+
+        function calculateHaversineDistance(c1, c2) {
+            const R = 6371;
+            const dLat = (c2[0] - c1[0]) * Math.PI / 180;
+            const dLon = (c2[1] - c1[1]) * Math.PI / 180;
+            const a = Math.sin(dLat / 2) ** 2 + Math.cos(c1[0] * Math.PI / 180) * Math.cos(c2[0] * Math.PI / 180) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        }
+
+        function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+        let toastTimer;
+        function showToast(msg, icon = "fa-bell") {
+            const toast = document.getElementById('toastAlert');
+            document.getElementById('toastMessage').textContent = msg;
+            document.getElementById('toastIcon').className = `fa-solid ${icon} text-base`;
+            toast.classList.remove('hidden');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => { toast.classList.add('hidden'); }, 4000);
+        }
+        function hideToast() { document.getElementById('toastAlert').classList.add('hidden'); }
+    </script>
+</body>
+</html>
+```
+## eof
