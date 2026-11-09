@@ -71,7 +71,7 @@
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
                     <button onclick="openModal('convoyModal')" class="px-2.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-[10px] font-extrabold text-white flex items-center gap-1">
-                        <i class="fa-solid fa-users-rays"></i> <span id="convoyCodeDisplay">#WZ-849</span>
+                        <i class="fa-solid fa-users-rays"></i> <span id="convoyCodeDisplay">Sin Convoy</span>
                     </button>
                     <button id="btnToggleDrive" onclick="toggleRealGPSBroadcast()" class="w-8 h-8 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black flex items-center justify-center shadow" title="Mi GPS Real">
                         <i id="driveIcon" class="fa-solid fa-satellite-dish text-xs"></i>
@@ -182,7 +182,7 @@
                         <div class="w-9 h-9 rounded-xl bg-violet-500/20 text-violet-400 flex items-center justify-center"><i class="fa-solid fa-users-rays"></i></div>
                         <div>
                             <h2 class="text-sm font-extrabold text-white">Convoy Independiente</h2>
-                            <p class="text-[11px] text-slate-400">Comparte tu código para ir por el mismo lado</p>
+                            <p class="text-[11px] text-slate-400">Crea o únete a un código para ir juntos</p>
                         </div>
                     </div>
                     <button onclick="closeModal('convoyModal')" class="w-8 h-8 rounded-lg bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center"><i class="fa-solid fa-xmark"></i></button>
@@ -190,12 +190,13 @@
                 <div class="mt-3 bg-slate-950 border border-violet-500/40 rounded-2xl p-3 space-y-3">
                     <div class="flex items-center justify-between">
                         <div>
-                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-violet-400">Tu Código de Convoy</span>
-                            <div id="modalConvoyCode" class="text-xl font-black font-mono text-white">WZ-849</div>
+                            <span class="text-[9px] font-extrabold uppercase tracking-wider text-violet-400">Tu Convoy Actual</span>
+                            <div id="modalConvoyCode" class="text-xl font-black font-mono text-white">SIN CONVOY</div>
                         </div>
-                        <div class="flex gap-1.5">
-                            <button onclick="createNewCustomConvoy()" class="px-2.5 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-xs font-extrabold text-white flex items-center gap-1 shadow"><i class="fa-solid fa-plus"></i> Crear Nuevo</button>
-                            <button onclick="copyConvoyLink()" class="px-2.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-extrabold text-cyan-400 flex items-center gap-1"><i class="fa-solid fa-copy"></i> Copiar</button>
+                        <div class="flex gap-1.5 flex-wrap justify-end">
+                            <button onclick="createNewCustomConvoy()" class="px-2 py-2 rounded-xl bg-violet-600 hover:bg-violet-500 active:scale-95 text-xs font-extrabold text-white flex items-center gap-1 shadow"><i class="fa-solid fa-plus"></i> Crear Nuevo</button>
+                            <button onclick="leaveCurrentConvoy()" class="px-2 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 active:scale-95 text-xs font-extrabold text-white flex items-center gap-1 shadow"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+                            <button onclick="copyConvoyLink()" class="px-2 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 active:scale-95 text-xs font-extrabold text-cyan-400 flex items-center gap-1"><i class="fa-solid fa-copy"></i> Copiar</button>
                         </div>
                     </div>
                     <div class="pt-2.5 border-t border-slate-800 flex gap-1.5">
@@ -204,7 +205,7 @@
                     </div>
                 </div>
                 <div class="mt-3 space-y-2">
-                    <div class="flex items-center justify-between"><span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Dispositivos en línea</span><span class="text-[10px] text-emerald-400 font-bold" id="convoyStatusIndicator">● Sincronizado</span></div>
+                    <div class="flex items-center justify-between"><span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Dispositivos en línea</span><span class="text-[10px] text-emerald-400 font-bold" id="convoyStatusIndicator">● Desconectado</span></div>
                     
                     <!-- Tarjeta Mi Dispositivo -->
                     <div class="p-2.5 rounded-xl bg-slate-800/80 border border-cyan-500/40 flex items-center justify-between">
@@ -219,7 +220,7 @@
                     <div class="p-2.5 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center justify-between">
                         <div class="flex items-center gap-2.5">
                             <div class="w-8 h-8 rounded-full bg-violet-500 text-white font-black flex items-center justify-center text-xs" id="friendAvatarSymbol">👥</div>
-                            <div><h4 id="friendConvoyMemberName" class="text-xs font-bold text-white">Esperando conexión de amigo...</h4><p id="friendDeviceStatus" class="text-[10px] text-slate-400">Comparte el código para empezar</p></div>
+                            <div><h4 id="friendConvoyMemberName" class="text-xs font-bold text-white">Esperando conexión de amigo...</h4><p id="friendDeviceStatus" class="text-[10px] text-slate-400">Únete a un convoy para ver amigos</p></div>
                         </div>
                         <button onclick="focusFriendDevice()" class="px-2.5 py-1 rounded-lg bg-slate-700 text-[11px] font-bold text-violet-300">Localizar</button>
                     </div>
@@ -309,7 +310,7 @@
                         </div>
                     </div>
                 </div>
-                <button onclick="completePermissionsAndStart()" class="w-full mt-5 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">Entrar al Mapa y Convoy</button>
+                <button onclick="completePermissionsAndStart()" class="w-full mt-5 py-3.5 rounded-2xl bg-gradient-to-r from-cyan-400 to-emerald-400 text-slate-950 font-black text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/20 active:scale-95 transition-all">Entrar al Mapa</button>
             </div>
         </div>
 
@@ -322,7 +323,7 @@
         import { getFirestore, doc, setDoc, onSnapshot, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         let map, tileLayer, userMarker, friendMarker, destMarker, routeLine, routeGlowLine;
-        let speakerEnabled = true, isTalking = false, convoyCode = localStorage.getItem('rutalibre_convoy_code') || "WZ-849", isBroadcastingGPS = false, watchPositionId = null;
+        let speakerEnabled = true, isTalking = false, convoyCode = localStorage.getItem('rutalibre_convoy_code') || "", isBroadcastingGPS = false, watchPositionId = null;
         let selectedAvatarIcon = 'fa-car-side', editAvatarIcon = 'fa-car-side', myNickname = 'Conductor';
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'rutalibre-convoy-prod';
@@ -363,6 +364,7 @@
         window.stopTalking = stopTalking;
         window.joinFriendConvoy = joinFriendConvoy;
         window.createNewCustomConvoy = createNewCustomConvoy;
+        window.leaveCurrentConvoy = leaveCurrentConvoy;
         window.copyConvoyLink = copyConvoyLink;
         window.focusFriendDevice = focusFriendDevice;
         window.createMapReport = createMapReport;
@@ -393,8 +395,15 @@
                 selectEditAvatar(editAvatarIcon);
             }
 
-            document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
-            document.getElementById('modalConvoyCode').textContent = convoyCode;
+            if (convoyCode) {
+                document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
+                document.getElementById('modalConvoyCode').textContent = convoyCode;
+                document.getElementById('convoyStatusIndicator').textContent = "● Sincronizado";
+            } else {
+                document.getElementById('convoyCodeDisplay').textContent = "Sin Convoy";
+                document.getElementById('modalConvoyCode').textContent = "SIN CONVOY";
+                document.getElementById('convoyStatusIndicator').textContent = "● Desconectado";
+            }
 
             if (!localStorage.getItem('rutalibre_configured')) {
                 document.getElementById('permissionsModal').classList.remove('hidden');
@@ -412,7 +421,7 @@
                 } else {
                     await signInAnonymously(auth);
                 }
-                setupCloudSyncListeners();
+                if (convoyCode) setupCloudSyncListeners();
             } catch (e) {
                 setupCrossTabSync();
             }
@@ -462,7 +471,7 @@
             document.getElementById('myConvoyProfileName').textContent = myNickname;
             closeModal('profileModal');
             showToast("Perfil actualizado correctamente", "fa-user-check");
-            publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+            if (convoyCode) publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
         }
 
         function clearAppStorageData() {
@@ -550,12 +559,13 @@
 
             userMarker = L.marker(currentCoords, { icon: userIcon, zIndexOffset: 1000 }).addTo(map);
             friendMarker = L.marker([-12.1020, -77.0350], { icon: friendIcon }).addTo(map);
+            friendMarker.setOpacity(0); // Oculto por defecto hasta unirse a un convoy
 
             map.on('click', function (e) {
                 const clickedCoords = [e.latlng.lat, e.latlng.lng];
                 calculateRealRoute(currentCoords, clickedCoords, "Destino seleccionado");
-                publishRouteToCloud(clickedCoords, "Destino en Mapa");
-                showToast("Ruta compartida en la nube", "fa-route");
+                if (convoyCode) publishRouteToCloud(clickedCoords, "Destino en Mapa");
+                showToast("Destino establecido en el mapa", "fa-route");
             });
         }
 
@@ -583,7 +593,7 @@
 
         let activeCloudUnsub = null;
         function setupCloudSyncListeners() {
-            if (!db) return;
+            if (!db || !convoyCode) return;
             if (activeCloudUnsub) {
                 activeCloudUnsub();
                 activeCloudUnsub = null;
@@ -598,7 +608,7 @@
                             if (activeDestination.name !== dest.name) {
                                 activeDestination = dest;
                                 calculateRealRoute(currentCoords, dest.coords, dest.name);
-                                showToast(`Ruta sincronizada: ${dest.name}`, "fa-route");
+                                showToast(`Ruta sincronizada con convoy: ${dest.name}`, "fa-route");
                             }
                         }
                     }
@@ -612,6 +622,7 @@
                                     foundFriend = true;
                                     friendLastCoords = friendData.coords;
                                     friendMarker.setLatLng(friendLastCoords);
+                                    friendMarker.setOpacity(1);
                                     const friendName = friendData.nickname || "Amigo";
                                     const badge = document.getElementById('friendBadgeName');
                                     if (badge) badge.textContent = friendName;
@@ -623,12 +634,14 @@
                             }
                         });
                         if (!foundFriend) {
+                            friendMarker.setOpacity(0);
                             document.getElementById('friendConvoyMemberName').textContent = "Esperando conexión de amigo...";
                             document.getElementById('friendDeviceStatus').textContent = `Convoy #${convoyCode} activo • Comparte código`;
                             document.getElementById('friendAvatarSymbol').innerHTML = "👥";
                         }
                     }
                 } else {
+                    friendMarker.setOpacity(0);
                     document.getElementById('friendConvoyMemberName').textContent = "Esperando conexión de amigo...";
                     document.getElementById('friendDeviceStatus').textContent = `Convoy #${convoyCode} listo`;
                 }
@@ -636,7 +649,7 @@
         }
 
         async function publishGPSCoordsToCloud(lat, lng) {
-            if (!db) return;
+            if (!db || !convoyCode) return;
             try {
                 const convoyDocRef = doc(db, 'artifacts', appId, 'public', 'data', `convoy_${convoyCode}`);
                 const docSnap = await getDoc(convoyDocRef);
@@ -648,7 +661,7 @@
         }
 
         async function publishRouteToCloud(destCoords, destName) {
-            if (!db) return;
+            if (!db || !convoyCode) return;
             try {
                 const convoyDocRef = doc(db, 'artifacts', appId, 'public', 'data', `convoy_${convoyCode}`);
                 await setDoc(convoyDocRef, { destination: { coords: destCoords, name: destName }, lastUpdatedBy: myDeviceId }, { merge: true });
@@ -676,7 +689,7 @@
                         const speedKmh = pos.coords.speed ? Math.round(pos.coords.speed * 3.6) : Math.floor(Math.random() * 30 + 15);
                         document.getElementById('speedValue').textContent = speedKmh;
                         document.getElementById('myDeviceCoordsDisplay').textContent = `${myNickname} • ${currentCoords[0].toFixed(4)}, ${currentCoords[1].toFixed(4)}`;
-                        publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+                        if (convoyCode) publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
                     },
                     (err) => { showToast("Error de GPS", "fa-triangle-exclamation"); },
                     { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
@@ -784,7 +797,7 @@
                         const targetCoords = [lat, lng];
                         activeDestination = { name: shortName, coords: targetCoords, street: displayName };
                         calculateRealRoute(currentCoords, targetCoords, shortName);
-                        publishRouteToCloud(targetCoords, shortName);
+                        if (convoyCode) publishRouteToCloud(targetCoords, shortName);
                         container.classList.add('hidden');
                         closeModal('routesModal');
                         showToast(`Ruta a ${shortName} establecida`, "fa-route");
@@ -806,7 +819,7 @@
             const dest = presets[index];
             activeDestination = dest;
             calculateRealRoute(currentCoords, dest.coords, dest.name);
-            publishRouteToCloud(dest.coords, dest.name);
+            if (convoyCode) publishRouteToCloud(dest.coords, dest.name);
             closeModal('routesModal');
             showToast(`Ruta a ${dest.name}`, "fa-users");
         }
@@ -851,32 +864,61 @@
             localStorage.setItem('rutalibre_convoy_code', convoyCode);
             document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
             document.getElementById('modalConvoyCode').textContent = convoyCode;
+            document.getElementById('convoyStatusIndicator').textContent = "● Sincronizado";
+            if (activeCloudUnsub) { activeCloudUnsub(); activeCloudUnsub = null; }
             setupCloudSyncListeners();
-            showToast(`Nuevo convoy creado: #${convoyCode}`, "fa-users-rectangle");
+            publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+            closeModal('convoyModal');
+            showToast(`¡Convoy creado y unido exitosamente: #${convoyCode}!`, "fa-users-rectangle");
         }
 
         function joinFriendConvoy() {
             const codeInput = document.getElementById('joinCodeInput');
             const newCode = codeInput.value.trim().toUpperCase();
-            if (!newCode) return;
+            if (!newCode) {
+                showToast("Escribe un código de convoy válido", "fa-triangle-exclamation");
+                return;
+            }
             convoyCode = newCode;
             localStorage.setItem('rutalibre_convoy_code', convoyCode);
             document.getElementById('convoyCodeDisplay').textContent = `#${convoyCode}`;
             document.getElementById('modalConvoyCode').textContent = convoyCode;
+            document.getElementById('convoyStatusIndicator').textContent = "● Sincronizado";
             codeInput.value = '';
             closeModal('convoyModal');
+            if (activeCloudUnsub) { activeCloudUnsub(); activeCloudUnsub = null; }
             setupCloudSyncListeners();
-            showToast(`Conectado al convoy ${convoyCode}`, "fa-link");
+            publishGPSCoordsToCloud(currentCoords[0], currentCoords[1]);
+            showToast(`¡Te has unido correctamente al convoy #${convoyCode}!`, "fa-link");
+        }
+
+        function leaveCurrentConvoy() {
+            convoyCode = "";
+            localStorage.removeItem('rutalibre_convoy_code');
+            document.getElementById('convoyCodeDisplay').textContent = "Sin Convoy";
+            document.getElementById('modalConvoyCode').textContent = "SIN CONVOY";
+            document.getElementById('convoyStatusIndicator').textContent = "● Desconectado";
+            if (activeCloudUnsub) { activeCloudUnsub(); activeCloudUnsub = null; }
+            friendMarker.setOpacity(0);
+            document.getElementById('friendConvoyMemberName').textContent = "Esperando conexión de amigo...";
+            document.getElementById('friendDeviceStatus').textContent = "Únete a un convoy para ver amigos";
+            document.getElementById('friendAvatarSymbol').innerHTML = "👥";
+            closeModal('convoyModal');
+            showToast("Te has salido del convoy actual", "fa-right-from-bracket");
         }
 
         function copyConvoyLink() {
+            if (!convoyCode) {
+                showToast("No estás en ningún convoy para copiar", "fa-circle-info");
+                return;
+            }
             const t = document.createElement('textarea');
             t.value = convoyCode;
             document.body.appendChild(t);
             t.select();
             document.execCommand('copy');
             document.body.removeChild(t);
-            showToast(`Código ${convoyCode} copiado`, "fa-check");
+            showToast(`Código ${convoyCode} copiado al portapapeles`, "fa-check");
         }
 
         function focusFriendDevice() {
