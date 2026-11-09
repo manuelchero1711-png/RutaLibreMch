@@ -19,15 +19,14 @@
             }
         }
     </script>
-    <!-- Leaflet CSS & JS para mapas 100% gratuitos y sin llaves -->
+    <!-- Leaflet CSS & JS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
-    <!-- FontAwesome para iconos de Waze -->
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- ENLACE AL MANIFIESTO REAL PARA PWABUILDER Y APK -->
     <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#22d3ee">
+    <meta name="theme-color" content="#020617">
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap');
@@ -35,75 +34,66 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Estilo nocturno personalizado para mapas Esri sin 403 */
         .waze-night-tiles {
             filter: brightness(0.65) invert(1) contrast(1.3) hue-rotate(200deg) saturate(0.8);
         }
+
+        /* Forzar pantalla completa nativa sin márgenes en APK / PWA */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100dvh;
+            overflow: hidden;
+            background-color: #020617;
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-white h-[100dvh] w-screen overflow-hidden flex items-center justify-center sm:p-3 select-none">
+<body class="bg-slate-950 text-white w-screen h-[100dvh] overflow-hidden flex flex-col select-none">
 
-    <!-- MARCO DE TELÉFONO MÓVIL (PANTALLA COMPLETA EN MÓVIL, SMARTPHONE EN ESCRITORIO) -->
-    <div id="mobilePhoneShell" class="relative w-full max-w-[420px] h-full sm:h-[94dvh] sm:max-h-[880px] bg-slate-900 sm:rounded-[44px] sm:border-[7px] sm:border-slate-800 shadow-[0_0_70px_rgba(0,0,0,0.85)] overflow-hidden flex flex-col">
-
-        <!-- BARRA DE ESTADO NATIVA DEL CELULAR -->
-        <div class="relative z-40 bg-slate-950/80 backdrop-blur-md px-5 pt-2 pb-1.5 flex items-center justify-between text-[11px] font-bold text-slate-200 shrink-0">
-            <div class="flex items-center gap-1.5">
-                <span id="phoneClock" class="font-mono font-extrabold">08:24</span>
-                <i class="fa-solid fa-location-arrow text-[9px] text-cyan-400"></i>
-            </div>
-            <!-- Isla Dinámica / Notch -->
-            <div class="w-24 h-4 bg-black rounded-full border border-slate-800/80 flex items-center justify-between px-2.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[8px] font-mono text-slate-400" id="cloudStatus">NUBE ACTIVA</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-[10px]">
-                <span class="text-emerald-400 font-extrabold">5G</span>
-                <i class="fa-solid fa-signal text-[10px]"></i>
-                <i class="fa-solid fa-battery-full text-xs text-emerald-400"></i>
-            </div>
-        </div>
+    <!-- CONTENEDOR PRINCIPAL NATIVO (PANTALLA COMPLETA) -->
+    <div id="mobilePhoneShell" class="relative w-full h-full bg-slate-900 overflow-hidden flex flex-col">
 
         <!-- CABECERA FLOTANTE MINIMALISTA (MÁXIMO MAPA VISIBLE) -->
-        <header class="relative z-30 px-3 pt-1.5 pointer-events-none flex flex-col gap-1 w-full shrink-0">
+        <header class="relative z-30 px-3 pt-2 pointer-events-none flex flex-col gap-1 w-full shrink-0">
             <!-- Barra superior compacta con indicador de ruta y convoy -->
-            <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl px-3 py-1.5 shadow-xl flex items-center justify-between">
+            <div class="pointer-events-auto bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl px-3 py-2 shadow-xl flex items-center justify-between">
                 <div class="flex items-center gap-2 min-w-0">
-                    <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+                    <div class="w-8 h-8 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-route text-xs"></i>
                     </div>
                     <div class="min-w-0">
                         <div class="flex items-center gap-1.5">
                             <span id="etaMinutes" class="text-xs font-black text-emerald-400">14 min</span>
                             <span id="etaDistance" class="text-[11px] text-slate-300 font-bold">(4.8 km)</span>
-                            <span class="text-[9px] font-mono bg-slate-800 text-cyan-400 px-1 py-0.2 rounded" id="etaClock">12:35</span>
+                            <span class="text-[9px] font-mono bg-slate-800 text-cyan-400 px-1.5 py-0.5 rounded" id="etaClock">12:35</span>
                         </div>
                         <p id="destSubtitle" class="text-[10px] text-slate-400 truncate">Parque Kennedy, Miraflores</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-1.5 shrink-0">
-                    <button onclick="openModal('convoyModal')" class="px-2 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-[10px] font-extrabold text-white flex items-center gap-1">
+                    <button onclick="openModal('convoyModal')" class="px-2.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-[10px] font-extrabold text-white flex items-center gap-1">
                         <i class="fa-solid fa-users-rays"></i> <span id="convoyCodeDisplay">#WZ-849</span>
                     </button>
-                    <button id="btnToggleDrive" onclick="toggleRealGPSBroadcast()" class="w-7 h-7 rounded-lg bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black flex items-center justify-center shadow" title="Mi GPS Real">
-                        <i id="driveIcon" class="fa-solid fa-satellite-dish text-[10px]"></i>
+                    <button id="btnToggleDrive" onclick="toggleRealGPSBroadcast()" class="w-8 h-8 rounded-xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black flex items-center justify-center shadow" title="Mi GPS Real">
+                        <i id="driveIcon" class="fa-solid fa-satellite-dish text-xs"></i>
                     </button>
                 </div>
             </div>
 
             <!-- BUSCADOR FLOTANTE COMPACTO -->
             <div class="pointer-events-auto relative">
-                <div class="absolute inset-y-0 left-2.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-magnifying-glass text-[11px]"></i>
+                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
                 </div>
-                <input id="mainSearchInput" type="text" oninput="handleSearchTyping(this.value, 'mainSearchResults')" placeholder="¿A dónde vamos? Escribe calle o lugar..." class="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-xl pl-8 pr-20 py-1.5 text-[11px] text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 shadow-md">
-                <div class="absolute inset-y-1 right-1 flex items-center gap-1">
-                    <button onclick="openModal('routesModal')" class="px-2 py-0.5 rounded-lg bg-slate-800 text-cyan-400 text-[10px] font-bold">
+                <input id="mainSearchInput" type="text" oninput="handleSearchTyping(this.value, 'mainSearchResults')" placeholder="¿A dónde vamos? Escribe calle o lugar..." class="w-full bg-slate-900/90 backdrop-blur-md border border-slate-700/80 rounded-2xl pl-9 pr-20 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:border-cyan-400 shadow-md">
+                <div class="absolute inset-y-1 right-1.5 flex items-center gap-1">
+                    <button onclick="openModal('routesModal')" class="px-2.5 py-1 rounded-xl bg-slate-800 text-cyan-400 text-[10px] font-bold">
                         Destinos
                     </button>
                 </div>
                 <!-- Resultados de Búsqueda -->
-                <div id="mainSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl hidden z-50 max-h-48 overflow-y-auto"></div>
+                <div id="mainSearchResults" class="absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-2xl shadow-2xl hidden z-50 max-h-48 overflow-y-auto"></div>
             </div>
         </header>
 
@@ -111,19 +101,19 @@
         <div id="map" class="absolute inset-0 z-10 w-full h-full"></div>
 
         <!-- CONTROLES FLOTANTES IZQUIERDOS -->
-        <div class="absolute left-3 bottom-20 z-20 flex flex-col gap-2 pointer-events-auto">
+        <div class="absolute left-3 bottom-24 z-20 flex flex-col gap-2.5 pointer-events-auto">
             <div class="w-14 h-14 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700 shadow-2xl flex flex-col items-center justify-center p-1 relative">
                 <span id="speedValue" class="text-lg font-black font-mono text-cyan-400 leading-none">0</span>
                 <span class="text-[8px] font-extrabold text-slate-400 uppercase mt-0.5">KM/H</span>
                 <div class="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white font-black text-[8px] flex items-center justify-center border border-slate-900">60</div>
             </div>
-            <button onclick="toggleMapTheme()" class="w-9 h-9 rounded-xl bg-slate-900/90 backdrop-blur-md border border-slate-700 text-cyan-400 hover:text-white flex items-center justify-center shadow-lg active:scale-95" title="Cambiar Tema">
-                <i id="themeIcon" class="fa-solid fa-moon text-xs"></i>
+            <button onclick="toggleMapTheme()" class="w-10 h-10 rounded-2xl bg-slate-900/90 backdrop-blur-md border border-slate-700 text-cyan-400 hover:text-white flex items-center justify-center shadow-lg active:scale-95" title="Cambiar Tema">
+                <i id="themeIcon" class="fa-solid fa-moon text-sm"></i>
             </button>
         </div>
 
         <!-- BOTONES PRINCIPALES FLOTANTES DERECHOS -->
-        <div class="absolute right-3 bottom-20 z-20 flex flex-col items-end gap-3 pointer-events-auto">
+        <div class="absolute right-3 bottom-24 z-20 flex flex-col items-end gap-3 pointer-events-auto">
             <button onclick="openModal('reportModal')" class="w-14 h-14 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black flex flex-col items-center justify-center shadow-2xl active:scale-95 border-2 border-amber-300">
                 <i class="fa-solid fa-triangle-exclamation text-lg"></i>
                 <span class="text-[9px] font-black uppercase tracking-tight leading-none mt-0.5">Reportar</span>
@@ -134,22 +124,22 @@
             </button>
         </div>
 
-        <!-- BARRA INFERIOR -->
-        <nav class="relative z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 flex items-center justify-around shrink-0 text-slate-400 text-[10px]">
-            <button onclick="openModal('routesModal')" class="flex flex-col items-center gap-0.5 hover:text-cyan-400 active:scale-95">
-                <i class="fa-solid fa-route text-sm text-cyan-400"></i>
+        <!-- BARRA INFERIOR NATIVA -->
+        <nav class="relative z-30 bg-slate-950/95 backdrop-blur-md border-t border-slate-800/80 px-4 py-2.5 flex items-center justify-around shrink-0 text-slate-400 text-[10px]">
+            <button onclick="openModal('routesModal')" class="flex flex-col items-center gap-1 hover:text-cyan-400 active:scale-95">
+                <i class="fa-solid fa-route text-base text-cyan-400"></i>
                 <span class="font-bold">Rutas</span>
             </button>
-            <button onclick="openModal('convoyModal')" class="flex flex-col items-center gap-0.5 hover:text-violet-400 active:scale-95">
-                <i class="fa-solid fa-users-rays text-sm text-violet-400"></i>
+            <button onclick="openModal('convoyModal')" class="flex flex-col items-center gap-1 hover:text-violet-400 active:scale-95">
+                <i class="fa-solid fa-users-rays text-base text-violet-400"></i>
                 <span class="font-bold">Convoy</span>
             </button>
-            <button onclick="openModal('voiceModal')" class="flex flex-col items-center gap-0.5 hover:text-emerald-400 active:scale-95">
-                <i class="fa-solid fa-walkie-talkie text-sm text-emerald-400"></i>
+            <button onclick="openModal('voiceModal')" class="flex flex-col items-center gap-1 hover:text-emerald-400 active:scale-95">
+                <i class="fa-solid fa-walkie-talkie text-base text-emerald-400"></i>
                 <span class="font-bold">Sala Voz</span>
             </button>
-            <button onclick="useRealGPSOnce()" class="flex flex-col items-center gap-0.5 hover:text-amber-400 active:scale-95">
-                <i class="fa-solid fa-crosshairs text-sm text-amber-400"></i>
+            <button onclick="useRealGPSOnce()" class="flex flex-col items-center gap-1 hover:text-amber-400 active:scale-95">
+                <i class="fa-solid fa-crosshairs text-base text-amber-400"></i>
                 <span class="font-bold">Mi GPS</span>
             </button>
         </nav>
@@ -278,7 +268,7 @@
         </div>
 
         <!-- NOTIFICACIÓN TOAST -->
-        <div id="toastAlert" class="absolute top-20 left-4 right-4 z-50 hidden transition-all duration-300">
+        <div id="toastAlert" class="absolute top-16 left-4 right-4 z-50 hidden transition-all duration-300">
             <div class="bg-slate-900/95 backdrop-blur-md border border-cyan-500/50 rounded-2xl p-3 shadow-2xl flex items-center justify-between">
                 <div class="flex items-center gap-2.5">
                     <div id="toastIconContainer" class="w-8 h-8 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center shrink-0"><i id="toastIcon" class="fa-solid fa-bell text-sm"></i></div>
@@ -290,7 +280,7 @@
 
         <!-- MODAL 5: PERMISOS Y PERFIL INICIAL -->
         <div id="permissionsModal" class="absolute inset-0 z-50 bg-slate-950/95 backdrop-blur-xl flex items-center justify-center p-4">
-            <div class="bg-slate-900 border border-slate-700 w-full rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
+            <div class="bg-slate-900 border border-slate-700 w-full max-w-sm rounded-3xl p-6 shadow-2xl flex flex-col items-center text-center max-h-[90dvh] overflow-y-auto no-scrollbar">
                 <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center text-slate-950 text-2xl font-black mb-4 shadow-lg shadow-cyan-500/20"><i class="fa-solid fa-route"></i></div>
                 <h2 class="text-lg font-black text-white">Bienvenido a RutaLibre</h2>
                 <p class="text-xs text-slate-400 mt-1 mb-4">GPS social en vivo, convoy y walkie-talkie 100% gratis. Configuremos tu perfil.</p>
@@ -356,8 +346,6 @@
         window.toggleRealGPSBroadcast = toggleRealGPSBroadcast;
         window.useRealGPSOnce = useRealGPSOnce;
         window.toggleMapTheme = toggleMapTheme;
-        window.toggleMuteSpeaker = toggleMuteSpeaker;
-        window.simulateFriendVoiceMessage = simulateFriendVoiceMessage;
         window.startTalking = startTalking;
         window.stopTalking = stopTalking;
         window.sendQuickVoice = sendQuickVoice;
@@ -373,8 +361,23 @@
 
         window.onload = async function () {
             initMap();
-            updatePhoneClock();
-            setInterval(updatePhoneClock, 30000);
+
+            const savedNickname = localStorage.getItem('rutalibre_nickname');
+            const savedAvatar = localStorage.getItem('rutalibre_avatar');
+            if (savedNickname) {
+                myNickname = savedNickname;
+                document.getElementById('userNameInput').value = myNickname;
+            }
+            if (savedAvatar) {
+                selectedAvatarIcon = savedAvatar;
+                selectAvatar(selectedAvatarIcon);
+            }
+
+            if (savedNickname && localStorage.getItem('rutalibre_configured') === 'true') {
+                document.getElementById('permissionsModal').classList.add('hidden');
+                updateUserMarkerIcon();
+                toggleRealGPSBroadcast();
+            }
 
             if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
                 try {
@@ -392,10 +395,8 @@
                     await signInAnonymously(auth);
                 }
                 currentUser = auth.currentUser;
-                document.getElementById('cloudStatus').textContent = "NUBE ACTIVA";
                 setupCloudSyncListeners();
             } catch (e) {
-                document.getElementById('cloudStatus').textContent = "MODO LOCAL";
                 setupCrossTabSync();
             }
 
@@ -464,6 +465,11 @@
         function completePermissionsAndStart() {
             const nicknameInput = document.getElementById('userNameInput').value.trim();
             if (nicknameInput) myNickname = nicknameInput;
+
+            localStorage.setItem('rutalibre_nickname', myNickname);
+            localStorage.setItem('rutalibre_avatar', selectedAvatarIcon);
+            localStorage.setItem('rutalibre_configured', 'true');
+
             document.getElementById('permissionsModal').classList.add('hidden');
             updateUserMarkerIcon();
             showToast(`¡Bienvenido ${myNickname}!`, "fa-user-check");
@@ -486,13 +492,6 @@
                 iconAnchor: [22, 22]
             });
             userMarker.setIcon(userIcon);
-        }
-
-        function updatePhoneClock() {
-            const el = document.getElementById('phoneClock');
-            if (!el) return;
-            const now = new Date();
-            el.textContent = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
         }
 
         function initMap() {
@@ -528,32 +527,21 @@
                 mapMode = 'day';
                 tileLayer.setUrl(MAP_TILES.street);
                 document.querySelector('.waze-night-tiles')?.classList.remove('waze-night-tiles');
-                icon.className = "fa-solid fa-sun text-xs text-amber-400";
+                icon.className = "fa-solid fa-sun text-sm text-amber-400";
                 showToast("Modo Día activado", "fa-sun");
             } else if (mapMode === 'day') {
                 mapMode = 'satellite';
                 tileLayer.setUrl(MAP_TILES.satellite);
-                icon.className = "fa-solid fa-earth-americas text-xs text-cyan-400";
+                icon.className = "fa-solid fa-earth-americas text-sm text-cyan-400";
                 showToast("Modo Satélite activado", "fa-globe");
             } else {
                 mapMode = 'night';
                 tileLayer.setUrl(MAP_TILES.street);
                 tileLayer.options.className = 'waze-night-tiles';
                 tileLayer.redraw();
-                icon.className = "fa-solid fa-moon text-xs text-cyan-400";
+                icon.className = "fa-solid fa-moon text-sm text-cyan-400";
                 showToast("Modo Noche activado", "fa-moon");
             }
-        }
-
-        function toggleMuteSpeaker() {
-            speakerEnabled = !speakerEnabled;
-            showToast(speakerEnabled ? "Audio activado" : "Audio silenciado", speakerEnabled ? "fa-volume-high" : "fa-volume-xmark");
-        }
-
-        function simulateFriendVoiceMessage() {
-            playRadioBeep(880, 0.08);
-            speakText("¡Hola amigo! Voy 50 metros detrás de ti.");
-            addVoiceLog("Carlos", `"¡Hola amigo! Voy detrás de ti"`, "text-violet-300");
         }
 
         function setupCloudSyncListeners() {
@@ -569,7 +557,6 @@
                                 activeDestination = dest;
                                 calculateRealRoute(currentCoords, dest.coords, dest.name);
                                 showToast(`Ruta actualizada a: ${dest.name}`, "fa-route");
-                                speakText(`Ruta actualizada hacia ${dest.name}`);
                             }
                         }
                     }
@@ -625,7 +612,7 @@
                     isBroadcastingGPS = false;
                     return;
                 }
-                icon.className = "fa-solid fa-satellite-dish fa-beat text-[10px]";
+                icon.className = "fa-solid fa-satellite-dish fa-beat text-xs";
                 btn.classList.replace('bg-emerald-400', 'bg-cyan-400');
                 showToast("Transmitiendo GPS real...", "fa-satellite");
                 watchPositionId = navigator.geolocation.watchPosition(
@@ -646,7 +633,7 @@
                     navigator.geolocation.clearWatch(watchPositionId);
                     watchPositionId = null;
                 }
-                icon.className = "fa-solid fa-satellite-dish text-[10px]";
+                icon.className = "fa-solid fa-satellite-dish text-xs";
                 btn.classList.replace('bg-cyan-400', 'bg-emerald-400');
                 document.getElementById('speedValue').textContent = "0";
                 showToast("GPS detenido", "fa-circle-info");
@@ -907,5 +894,3 @@
     </script>
 </body>
 </html>
-```
-## eof
